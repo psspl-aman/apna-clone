@@ -1,0 +1,131 @@
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAppSelector, useAppDispatch } from '../../app/hooks';
+import { logoutUser } from '../../features/auth/authSlice';
+import { Briefcase, ChevronDown, LogOut, User, Menu, X } from 'lucide-react';
+
+export const Navbar = () => {
+  const { user, isAuthenticated } = useAppSelector((s) => s.auth);
+  const dispatch = useAppDispatch();
+  const navigate = useNavigate();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+
+  const handleLogout = async () => {
+    await dispatch(logoutUser());
+    navigate('/');
+  };
+
+  return (
+    <nav className="bg-white shadow-sm border-b sticky top-0 z-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-16">
+          <Link to="/" className="flex items-center gap-2">
+            <Briefcase className="h-8 w-8 text-primary" />
+            <span className="text-xl font-bold text-gray-900">Apna</span>
+          </Link>
+
+          <div className="hidden md:flex items-center gap-4">
+            {isAuthenticated ? (
+              <>
+                {user?.role === 'employer' && (
+                  <Link
+                    to="/employer/post-job"
+                    className="bg-primary text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-primary-600"
+                  >
+                    Post a Job
+                  </Link>
+                )}
+                <div className="relative">
+                  <button
+                    onClick={() => setDropdownOpen(!dropdownOpen)}
+                    className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100"
+                  >
+                    <div className="h-8 w-8 bg-primary rounded-full flex items-center justify-center text-white text-sm font-medium">
+                      {user?.email?.[0]?.toUpperCase()}
+                    </div>
+                    <ChevronDown className="h-4 w-4 text-gray-500" />
+                  </button>
+                  {dropdownOpen && (
+                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border py-1">
+                      {user?.role === 'candidate' && (
+                        <Link
+                          to="/dashboard"
+                          className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                          onClick={() => setDropdownOpen(false)}
+                        >
+                          <User className="h-4 w-4" /> Dashboard
+                        </Link>
+                      )}
+                      {user?.role === 'employer' && (
+                        <Link
+                          to="/employer/dashboard"
+                          className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                          onClick={() => setDropdownOpen(false)}
+                        >
+                          <User className="h-4 w-4" /> Dashboard
+                        </Link>
+                      )}
+                      <button
+                        onClick={() => { handleLogout(); setDropdownOpen(false); }}
+                        className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 w-full"
+                      >
+                        <LogOut className="h-4 w-4" /> Logout
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </>
+            ) : (
+              <>
+                <Link
+                  to="/login"
+                  className="px-4 py-2 text-sm font-medium text-primary border border-primary rounded-lg hover:bg-primary-50"
+                >
+                  Employer Login
+                </Link>
+                <Link
+                  to="/login"
+                  className="px-4 py-2 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-600"
+                >
+                  Candidate Login
+                </Link>
+              </>
+            )}
+          </div>
+
+          <button
+            className="md:hidden p-2"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          >
+            {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+          </button>
+        </div>
+      </div>
+
+      {mobileMenuOpen && (
+        <div className="md:hidden border-t p-4 space-y-3">
+          {isAuthenticated ? (
+            <>
+              {user?.role === 'candidate' && (
+                <Link to="/dashboard" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded">Dashboard</Link>
+              )}
+              {user?.role === 'employer' && (
+                <>
+                  <Link to="/employer/dashboard" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded">Dashboard</Link>
+                  <Link to="/employer/post-job" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded">Post a Job</Link>
+                </>
+              )}
+              <button onClick={handleLogout} className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded">Logout</button>
+            </>
+          ) : (
+            <>
+              <Link to="/login" className="block px-4 py-2 text-sm text-primary border border-primary rounded text-center">Employer Login</Link>
+              <Link to="/login" className="block px-4 py-2 text-sm text-white bg-primary rounded text-center">Candidate Login</Link>
+            </>
+          )}
+        </div>
+      )}
+    </nav>
+  );
+};
