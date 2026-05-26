@@ -219,7 +219,7 @@ Phase 12: ✅✅✅✅✅✅  100%  — Polish & Deployment
 | 8.11 | Wire all filters → Redux `jobsSlice.filters` → API call | ✅ | |
 | 8.12 | Implement URL-synced filters (query params in URL) | ✅ | |
 | 8.13 | Build right sidebar (profile card + track applications + download app) | ✅ | |
-| 8.14 | Build Jobs dropdown mega-menu (matching screenshot 2) | ✅ | |
+| 8.14 | Build Jobs dropdown mega-menu (matching screenshot 2) | ✅ | 2-column dropdown with left direct links + right sub-menus, click-toggle, outside-click-close, Redux filter dispatch |
 
 **Phase 8 Complete?** ✅ YES
 
