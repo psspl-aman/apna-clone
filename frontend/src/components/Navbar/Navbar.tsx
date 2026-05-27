@@ -104,11 +104,11 @@ export const Navbar = () => {
                     <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border py-1">
                       {user?.role === 'candidate' && (
                         <Link
-                          to="/dashboard"
+                          to="/profile"
                           className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                           onClick={() => setDropdownOpen(false)}
                         >
-                          <User className="h-4 w-4" /> Dashboard
+                          <User className="h-4 w-4" /> Profile
                         </Link>
                       )}
                       {user?.role === 'employer' && (
@@ -167,7 +167,7 @@ export const Navbar = () => {
           {isAuthenticated ? (
             <>
               {user?.role === 'candidate' && (
-                <Link to="/dashboard" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded" onClick={() => setMobileMenuOpen(false)}>Dashboard</Link>
+                <Link to="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded" onClick={() => setMobileMenuOpen(false)}>Profile</Link>
               )}
               {user?.role === 'employer' && (
                 <>

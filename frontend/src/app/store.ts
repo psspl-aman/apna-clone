@@ -3,6 +3,7 @@ import authReducer from '../features/auth/authSlice';
 import jobsReducer from '../features/jobs/jobsSlice';
 import applicationsReducer from '../features/applications/applicationsSlice';
 import uiReducer from '../features/ui/uiSlice';
+import candidateReducer from '../features/candidates/candidateSlice';
 
 export const store = configureStore({
   reducer: {
@@ -10,6 +11,7 @@ export const store = configureStore({
     jobs: jobsReducer,
     applications: applicationsReducer,
     ui: uiReducer,
+    candidates: candidateReducer,
   },
 });
 

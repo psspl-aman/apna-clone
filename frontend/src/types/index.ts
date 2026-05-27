@@ -11,11 +11,60 @@ export interface CandidateProfile {
   userId: string;
   fullName: string;
   resumeUrl?: string;
+  resumeFileName?: string;
+  resumeUpdatedAt?: string;
   experience: number;
   skills: string[];
   education: string;
   city: string;
   gender: string;
+  phone?: string;
+  dateOfBirth?: string;
+  homeTown?: string;
+  currentLocation?: string;
+  currentSalary?: number;
+  totalExperience?: number;
+  spokenEnglishLevel?: string;
+  schoolMedium?: string;
+  highestEducation?: string;
+  preferredJobTitles?: string[];
+  preferredLocations?: string[];
+  languages?: { name: string; level: string }[];
+  profileCompletion?: number;
+  workExperiences?: WorkExperience[];
+  educations?: Education[];
+  certifications?: Certification[];
+}
+
+export interface WorkExperience {
+  id: string;
+  jobTitle: string;
+  companyName: string;
+  jobRoles: string[];
+  industry: string;
+  description: string;
+  skills: string[];
+  startDate: string;
+  endDate: string | null;
+  isCurrent: boolean;
+}
+
+export interface Education {
+  id: string;
+  degree: string;
+  fieldOfStudy: string;
+  institution: string;
+  educationLevel: string;
+  batchYear: number;
+}
+
+export interface Certification {
+  id: string;
+  name: string;
+  issuingOrg: string;
+  issueDate: string;
+  expiryDate: string | null;
+  credentialUrl: string;
 }
 
 export interface Company {

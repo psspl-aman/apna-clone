@@ -247,11 +247,18 @@ Phase 12: ✅✅✅✅✅✅  100%  — Polish & Deployment
 
 | Step | Task | Status | Notes |
 |------|------|--------|-------|
-| 10.1 | Build Candidate Dashboard layout | ✅ | |
-| 10.2 | Build Profile view & edit form | ✅ | |
-| 10.3 | Build Resume upload section | ✅ | |
-| 10.4 | Build My Applications list with status badges | ✅ | |
-| 10.5 | Build Profile completeness indicator | ✅ | |
+| 10.1 | Build Candidate Dashboard layout | ✅ | Rebuilt as full candidate profile page (2-column UI) |
+| 10.2 | Build Profile view & edit form | ✅ | Enhanced with 10+ fields (DOB, gender, salary, languages, etc.) via modals |
+| 10.3 | Build Resume upload section | ✅ | File upload with validation (PDF/DOC, 5MB limit) |
+| 10.4 | Build My Applications list with status badges | ✅ | Integrated with applications service |
+| 10.5 | Build Profile completeness indicator | ✅ | Dynamic percentage with color-coded bar |
+| 10.6 | Route /dashboard → /profile | ✅ | Updated route, Navbar, Footer links |
+| 10.7 | Database: new migrations (3 tables + column additions) | ✅ | work_experiences, educations, certifications + 14 new profile columns |
+| 10.8 | Backend: Sequelize models for WorkExp, Education, Certification | ✅ | With HasMany associations on CandidateProfile |
+| 10.9 | Backend: CRUD endpoints for work exp, education, certifications | ✅ | All create/update/delete with ownership checks |
+| 10.10 | Backend: Profile completion calculation | ✅ | Auto-recalculated on profile update |
+| 10.11 | Frontend: candidate service + Redux slice | ✅ | Full Redux state with all CRUD thunks |
+| 10.12 | Frontend: Modal component + 6 edit modals | ✅ | WorkExp, Education, Cert, Skills, Languages, Salary, BasicInfo modals |
 
 **Phase 10 Complete?** ✅ YES
 

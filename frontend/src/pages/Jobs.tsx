@@ -262,7 +262,7 @@ export const JobsPage = () => {
           <div className="bg-white border rounded-xl p-5">
             <h4 className="font-semibold text-gray-900 mb-3">Track Applications</h4>
             <p className="text-sm text-gray-500">Monitor your job applications</p>
-            <Link to="/dashboard" className="mt-3 inline-block text-sm text-primary font-medium hover:underline">View Status</Link>
+            <Link to="/profile" className="mt-3 inline-block text-sm text-primary font-medium hover:underline">View Status</Link>
           </div>
 
           <div className="bg-gradient-to-br from-primary to-primary-600 rounded-xl p-5 text-white text-center">

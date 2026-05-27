@@ -17,7 +17,7 @@ export const Footer = () => {
             <h3 className="text-white font-medium mb-4">For Job Seekers</h3>
             <div className="space-y-2 text-sm">
               <Link to="/jobs" className="block hover:text-white">Browse Jobs</Link>
-              <Link to="/dashboard" className="block hover:text-white">My Dashboard</Link>
+              <Link to="/profile" className="block hover:text-white">My Profile</Link>
             </div>
           </div>
           <div>
