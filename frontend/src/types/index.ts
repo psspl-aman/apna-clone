@@ -29,6 +29,8 @@ export interface CandidateProfile {
   highestEducation?: string;
   preferredJobTitles?: string[];
   preferredLocations?: string[];
+  employmentType?: string;
+  preferredShift?: string;
   languages?: { name: string; level: string }[];
   profileCompletion?: number;
   workExperiences?: WorkExperience[];

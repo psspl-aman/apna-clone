@@ -202,6 +202,14 @@ export const CandidateDashboard = () => {
     }
   };
 
+  const handleSaveGeneric = async (e: React.FormEvent<HTMLFormElement>, field: string, label: string) => {
+    e.preventDefault();
+    const form = new FormData(e.currentTarget);
+    const val = form.get(field) as string;
+    const ok = await dispatchAndToast(updateProfile({ [field]: val } as any), `${label} updated`);
+    if (ok) closeModal();
+  };
+
   const infoRows = [
     { label: 'Email ID', value: user?.email },
     { label: 'Mobile Number', value: profile?.phone || 'Not added' },
@@ -230,7 +238,13 @@ export const CandidateDashboard = () => {
                 </div>
               </div>
 
-              <div className="mt-4 pt-4 border-t grid grid-cols-2 gap-x-3 gap-y-3 text-sm">
+              <div className="flex items-center justify-between mt-4 pt-4 border-t">
+                <span className="text-sm font-medium text-gray-700">Personal Details</span>
+                <button onClick={() => openModal('basicInfo')} className="text-[#1a7d4e] text-sm flex items-center gap-1">
+                  <Pencil className="h-3.5 w-3.5" /> Edit
+                </button>
+              </div>
+              <div className="mt-2 grid grid-cols-2 gap-x-3 gap-y-3 text-sm">
                 {infoRows.map((row) => (
                   <div key={row.label} className={row.label === 'Email ID' ? 'col-span-2' : ''}>
                     <p className="text-gray-400 text-xs">{row.label}</p>
@@ -502,7 +516,7 @@ export const CandidateDashboard = () => {
                   <span className="text-sm text-gray-700">Job preference</span>
                   <p className="text-xs text-gray-400">No job preferences added. Add details...</p>
                 </div>
-                <button className="text-[#1a7d4e] text-sm font-medium">+ Add job preference</button>
+                <button onClick={() => openModal('jobPreference')} className="text-[#1a7d4e] text-sm font-medium">+ Add job preference</button>
               </div>
             </section>
           </div>
@@ -518,6 +532,8 @@ export const CandidateDashboard = () => {
           <div><label className="block text-sm font-medium text-gray-700 mb-1">Gender</label>
             <div className="flex gap-4"><label className="flex items-center gap-1.5 text-sm"><input type="radio" name="gender" value="Male" defaultChecked={profile?.gender === 'Male'} /> Male</label><label className="flex items-center gap-1.5 text-sm"><input type="radio" name="gender" value="Female" defaultChecked={profile?.gender === 'Female'} /> Female</label><label className="flex items-center gap-1.5 text-sm"><input type="radio" name="gender" value="Other" defaultChecked={profile?.gender === 'Other'} /> Other</label></div>
           </div>
+          <div><label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label><input name="phone" type="tel" defaultValue={profile?.phone} className="w-full border rounded-lg px-3 py-2 text-sm" /></div>
+          <div><label className="block text-sm font-medium text-gray-700 mb-1">Email ID</label><input name="email" type="email" defaultValue={user?.email} readOnly className="w-full border rounded-lg px-3 py-2 text-sm bg-gray-50 text-gray-500" /></div>
           <div><label className="block text-sm font-medium text-gray-700 mb-1">Current Location</label><input name="currentLocation" defaultValue={profile?.currentLocation || profile?.city} className="w-full border rounded-lg px-3 py-2 text-sm" /></div>
           <div><label className="block text-sm font-medium text-gray-700 mb-1">Home Town</label><input name="homeTown" defaultValue={profile?.homeTown} className="w-full border rounded-lg px-3 py-2 text-sm" /></div>
           <button type="submit" className="w-full bg-[#1a7d4e] text-white rounded-lg py-2 text-sm font-medium hover:bg-[#166534]">Save</button>
@@ -606,6 +622,113 @@ export const CandidateDashboard = () => {
           <div><label className="block text-sm font-medium text-gray-700 mb-1">Expiry Date</label><input name="expiryDate" type="date" defaultValue={editData?.expiryDate || ''} className="w-full border rounded-lg px-3 py-2 text-sm" /></div>
           <div><label className="block text-sm font-medium text-gray-700 mb-1">Credential URL</label><input name="credentialUrl" defaultValue={editData?.credentialUrl || ''} className="w-full border rounded-lg px-3 py-2 text-sm" /></div>
           <button type="submit" className="w-full bg-[#1a7d4e] text-white rounded-lg py-2 text-sm font-medium hover:bg-[#166534]">{editData?.id ? 'Update' : 'Add'}</button>
+        </form>
+      </Modal>
+
+      <Modal isOpen={activeSection === 'totalExperience'} onClose={closeModal} title="Total Years of Experience">
+        <form onSubmit={(e) => handleSaveGeneric(e, 'totalExperience', 'Experience')} className="space-y-4">
+          <div><label className="block text-sm font-medium text-gray-700 mb-1">Years of Experience</label>
+            <select name="totalExperience" defaultValue={profile?.totalExperience || ''} className="w-full border rounded-lg px-3 py-2 text-sm">
+              {[...Array(31)].map((_, i) => <option key={i} value={i}>{i} {i === 1 ? 'year' : 'years'}</option>)}
+            </select>
+          </div>
+          <button type="submit" className="w-full bg-[#1a7d4e] text-white rounded-lg py-2 text-sm font-medium hover:bg-[#166534]">Save</button>
+        </form>
+      </Modal>
+
+      <Modal isOpen={activeSection === 'highestEducation'} onClose={closeModal} title="Highest Education">
+        <form onSubmit={(e) => handleSaveGeneric(e, 'highestEducation', 'Education')} className="space-y-4">
+          <div><label className="block text-sm font-medium text-gray-700 mb-1">Highest Education</label>
+            <select name="highestEducation" defaultValue={profile?.highestEducation || ''} className="w-full border rounded-lg px-3 py-2 text-sm">
+              <option value="">Select</option>
+              <option value="10th">10th</option>
+              <option value="12th">12th</option>
+              <option value="Diploma">Diploma</option>
+              <option value="Graduation">Graduation</option>
+              <option value="Post Graduation">Post Graduation</option>
+              <option value="PhD">PhD</option>
+            </select>
+          </div>
+          <button type="submit" className="w-full bg-[#1a7d4e] text-white rounded-lg py-2 text-sm font-medium hover:bg-[#166534]">Save</button>
+        </form>
+      </Modal>
+
+      <Modal isOpen={activeSection === 'schoolMedium'} onClose={closeModal} title="School Medium">
+        <form onSubmit={(e) => handleSaveGeneric(e, 'schoolMedium', 'School medium')} className="space-y-4">
+          <div><label className="block text-sm font-medium text-gray-700 mb-1">School Medium</label>
+            <select name="schoolMedium" defaultValue={profile?.schoolMedium || ''} className="w-full border rounded-lg px-3 py-2 text-sm">
+              <option value="">Select</option>
+              <option value="English">English</option>
+              <option value="Hindi">Hindi</option>
+              <option value="Regional">Regional</option>
+            </select>
+          </div>
+          <button type="submit" className="w-full bg-[#1a7d4e] text-white rounded-lg py-2 text-sm font-medium hover:bg-[#166534]">Save</button>
+        </form>
+      </Modal>
+
+      <Modal isOpen={activeSection === 'preferredJobs'} onClose={closeModal} title="Preferred Job Titles / Roles">
+        <form onSubmit={async (e) => {
+          e.preventDefault();
+          const form = new FormData(e.currentTarget);
+          const raw = form.get('preferredJobs') as string;
+          const list = raw.split(',').map(s => s.trim()).filter(Boolean);
+          const ok = await dispatchAndToast(updateProfile({ preferredJobTitles: list } as any), 'Preferred jobs updated');
+          if (ok) closeModal();
+        }} className="space-y-4">
+          <div><label className="block text-sm font-medium text-gray-700 mb-1">Job Titles (comma separated)</label>
+            <input name="preferredJobs" defaultValue={profile?.preferredJobTitles?.join(', ') || ''} placeholder="e.g. Software Engineer, Full Stack Developer" className="w-full border rounded-lg px-3 py-2 text-sm" />
+          </div>
+          <button type="submit" className="w-full bg-[#1a7d4e] text-white rounded-lg py-2 text-sm font-medium hover:bg-[#166534]">Save</button>
+        </form>
+      </Modal>
+
+      <Modal isOpen={activeSection === 'preferredLocations'} onClose={closeModal} title="Preferred Locations">
+        <form onSubmit={async (e) => {
+          e.preventDefault();
+          const form = new FormData(e.currentTarget);
+          const raw = form.get('preferredLocations') as string;
+          const list = raw.split(',').map(s => s.trim()).filter(Boolean);
+          const ok = await dispatchAndToast(updateProfile({ preferredLocations: list } as any), 'Preferred locations updated');
+          if (ok) closeModal();
+        }} className="space-y-4">
+          <div><label className="block text-sm font-medium text-gray-700 mb-1">Locations (comma separated)</label>
+            <input name="preferredLocations" defaultValue={profile?.preferredLocations?.join(', ') || ''} placeholder="e.g. Bangalore, Mumbai, Pune" className="w-full border rounded-lg px-3 py-2 text-sm" />
+          </div>
+          <button type="submit" className="w-full bg-[#1a7d4e] text-white rounded-lg py-2 text-sm font-medium hover:bg-[#166534]">Save</button>
+        </form>
+      </Modal>
+
+      <Modal isOpen={activeSection === 'jobPreference'} onClose={closeModal} title="Job Preference">
+        <form onSubmit={async (e) => {
+          e.preventDefault();
+          const form = new FormData(e.currentTarget);
+          const data: any = {
+            employmentType: form.get('employmentType') as string,
+            preferredShift: form.get('preferredShift') as string,
+          };
+          const ok = await dispatchAndToast(updateProfile(data as any), 'Job preference updated');
+          if (ok) closeModal();
+        }} className="space-y-4">
+          <div><label className="block text-sm font-medium text-gray-700 mb-1">Employment Type</label>
+            <select name="employmentType" defaultValue={profile?.employmentType || ''} className="w-full border rounded-lg px-3 py-2 text-sm">
+              <option value="">Select</option>
+              <option value="Full Time">Full Time</option>
+              <option value="Part Time">Part Time</option>
+              <option value="Contract">Contract</option>
+              <option value="Internship">Internship</option>
+            </select>
+          </div>
+          <div><label className="block text-sm font-medium text-gray-700 mb-1">Preferred Shift</label>
+            <select name="preferredShift" defaultValue={profile?.preferredShift || ''} className="w-full border rounded-lg px-3 py-2 text-sm">
+              <option value="">Select</option>
+              <option value="Day">Day</option>
+              <option value="Night">Night</option>
+              <option value="Rotational">Rotational</option>
+              <option value="Flexible">Flexible</option>
+            </select>
+          </div>
+          <button type="submit" className="w-full bg-[#1a7d4e] text-white rounded-lg py-2 text-sm font-medium hover:bg-[#166534]">Save</button>
         </form>
       </Modal>
     </div>
