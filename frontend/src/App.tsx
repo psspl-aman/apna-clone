@@ -16,6 +16,10 @@ import { CandidateDashboard } from './pages/CandidateDashboard';
 import { EmployerDashboard } from './pages/EmployerDashboard';
 import { PostJobPage } from './pages/PostJob';
 import { NotFoundPage } from './pages/NotFound';
+import { JobPrepPage } from './pages/JobPrep';
+import { ContestPage } from './pages/Contest';
+import { DegreePage } from './pages/Degree';
+import { ResumeToolPage } from './pages/ResumeTool';
 
 function App() {
   const dispatch = useAppDispatch();
@@ -37,6 +41,10 @@ function App() {
             <Route path="/" element={<HomePage />} />
             <Route path="/jobs" element={<JobsPage />} />
             <Route path="/jobs/:id" element={<JobDetailPage />} />
+            <Route path="/job-prep" element={<JobPrepPage />} />
+            <Route path="/contest" element={<ContestPage />} />
+            <Route path="/degree" element={<DegreePage />} />
+            <Route path="/resume-tool" element={<ResumeToolPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
             <Route
