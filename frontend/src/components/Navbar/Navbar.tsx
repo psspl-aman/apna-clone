@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAppSelector, useAppDispatch } from '../../app/hooks';
 import { logoutUser } from '../../features/auth/authSlice';
 import { Briefcase, ChevronDown, LogOut, User, Menu, X } from 'lucide-react';
+import { JobsDropdown } from './JobsDropdown';
 
 export const Navbar = () => {
   const { user, isAuthenticated } = useAppSelector((s) => s.auth);
@@ -10,6 +11,7 @@ export const Navbar = () => {
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [jobsOpen, setJobsOpen] = useState(false);
 
   const handleLogout = async () => {
     await dispatch(logoutUser());
@@ -20,10 +22,29 @@ export const Navbar = () => {
     <nav className="bg-white shadow-sm border-b sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          <Link to="/" className="flex items-center gap-2">
-            <Briefcase className="h-8 w-8 text-primary" />
-            <span className="text-xl font-bold text-gray-900">Apna</span>
-          </Link>
+          <div className="flex items-center gap-8">
+            <Link to="/" className="flex items-center gap-2">
+              <Briefcase className="h-8 w-8 text-primary" />
+              <span className="text-xl font-bold text-gray-900">Apna</span>
+            </Link>
+
+            <div className="hidden md:block relative">
+              <button
+                onClick={() => { setJobsOpen(!jobsOpen); setDropdownOpen(false); }}
+                className={`flex items-center gap-1 text-sm font-medium py-2 ${
+                  jobsOpen ? 'text-[#1a7d4e]' : 'text-gray-700'
+                } hover:text-[#1a7d4e] transition-colors`}
+              >
+                Jobs
+                <ChevronDown
+                  className={`h-4 w-4 transition-transform duration-200 ${
+                    jobsOpen ? 'rotate-180' : ''
+                  }`}
+                />
+              </button>
+              <JobsDropdown isOpen={jobsOpen} onClose={() => setJobsOpen(false)} />
+            </div>
+          </div>
 
           <div className="hidden md:flex items-center gap-4">
             {isAuthenticated ? (
@@ -38,7 +59,7 @@ export const Navbar = () => {
                 )}
                 <div className="relative">
                   <button
-                    onClick={() => setDropdownOpen(!dropdownOpen)}
+                    onClick={() => { setDropdownOpen(!dropdownOpen); setJobsOpen(false); }}
                     className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100"
                   >
                     <div className="h-8 w-8 bg-primary rounded-full flex items-center justify-center text-white text-sm font-medium">
@@ -105,23 +126,24 @@ export const Navbar = () => {
 
       {mobileMenuOpen && (
         <div className="md:hidden border-t p-4 space-y-3">
+          <Link to="/jobs" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded" onClick={() => setMobileMenuOpen(false)}>Jobs</Link>
           {isAuthenticated ? (
             <>
               {user?.role === 'candidate' && (
-                <Link to="/dashboard" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded">Dashboard</Link>
+                <Link to="/dashboard" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded" onClick={() => setMobileMenuOpen(false)}>Dashboard</Link>
               )}
               {user?.role === 'employer' && (
                 <>
-                  <Link to="/employer/dashboard" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded">Dashboard</Link>
-                  <Link to="/employer/post-job" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded">Post a Job</Link>
+                  <Link to="/employer/dashboard" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded" onClick={() => setMobileMenuOpen(false)}>Dashboard</Link>
+                  <Link to="/employer/post-job" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded" onClick={() => setMobileMenuOpen(false)}>Post a Job</Link>
                 </>
               )}
-              <button onClick={handleLogout} className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded">Logout</button>
+              <button onClick={() => { handleLogout(); setMobileMenuOpen(false); }} className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded">Logout</button>
             </>
           ) : (
             <>
-              <Link to="/login" className="block px-4 py-2 text-sm text-primary border border-primary rounded text-center">Employer Login</Link>
-              <Link to="/login" className="block px-4 py-2 text-sm text-white bg-primary rounded text-center">Candidate Login</Link>
+              <Link to="/login" className="block px-4 py-2 text-sm text-primary border border-primary rounded text-center" onClick={() => setMobileMenuOpen(false)}>Employer Login</Link>
+              <Link to="/login" className="block px-4 py-2 text-sm text-white bg-primary rounded text-center" onClick={() => setMobileMenuOpen(false)}>Candidate Login</Link>
             </>
           )}
         </div>

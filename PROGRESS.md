@@ -219,7 +219,7 @@ Phase 12: ✅✅✅✅✅✅  100%  — Polish & Deployment
 | 8.11 | Wire all filters → Redux `jobsSlice.filters` → API call | ✅ | |
 | 8.12 | Implement URL-synced filters (query params in URL) | ✅ | |
 | 8.13 | Build right sidebar (profile card + track applications + download app) | ✅ | |
-| 8.14 | Build Jobs dropdown mega-menu (matching screenshot 2) | ✅ | |
+| 8.14 | Build Jobs dropdown mega-menu (matching screenshot 2) | ✅ | Enhanced with nested hover flyout submenus for City, Department, Company, Qualification, Others — 30 cities, 40 departments from seeders, 150ms hover delay for smooth UX |
 
 **Phase 8 Complete?** ✅ YES
 

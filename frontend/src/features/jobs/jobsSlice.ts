@@ -21,6 +21,7 @@ const initialState: JobsState = {
     job_type: '',
     salary_min: 0,
     exp_min: 0,
+    gender: '',
     date_posted: 'all',
     page: 1,
     limit: 10,

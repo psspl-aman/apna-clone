@@ -76,6 +76,7 @@ export interface JobFilters {
   salary_min: number;
   exp_min: number;
   exp_max?: number;
+  gender: string;
   date_posted: string;
   page: number;
   limit: number;
