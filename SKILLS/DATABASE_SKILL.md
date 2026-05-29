@@ -1,6 +1,8 @@
 # DATABASE_SKILL.md — PostgreSQL Schema, Migrations & Seeders
 
-> Read this before starting Phase 1.
+> Read this before starting Phase 1 or 13.
+
+**Last updated: 2026-05-29 (Phase 13)**
 
 ---
 
@@ -283,14 +285,56 @@ const categories = [
 ## 5. Migration Order (must run in this order)
 
 ```
-1. create-users
-2. create-candidate-profiles
-3. create-companies
-4. create-categories
-5. create-cities
-6. create-jobs
-7. create-applications
-8. create-refresh-tokens
+ 1. create-users
+ 2. create-candidate-profiles
+ 3. create-companies
+ 4. create-categories
+ 5. create-cities
+ 6. create-jobs
+ 7. create-applications
+ 8. create-refresh-tokens
+ 9. add-columns-to-candidate-profiles  (Phase 10)
+10. create-work-experiences             (Phase 10)
+11. create-educations                   (Phase 10)
+12. create-certifications               (Phase 10)
+13. add-advanced-job-fields             (Phase 13 — see below)
+```
+
+**Run**: `DB_PASSWORD=<pwd> npx sequelize-cli db:migrate`
+
+## 5a. Phase 13 — Advanced Job Fields Migration
+
+Adds 12 columns to the `jobs` table:
+
+```javascript
+// migrations/20260529200000-add-advanced-job-fields.js
+module.exports = {
+  async up(queryInterface, Sequelize) {
+    const cols = [
+      ['work_location_type', Sequelize.STRING(50)],  // 'work_from_office'|'work_from_home'|'field_job'
+      ['pay_type',           Sequelize.STRING(50)],  // 'fixed_only'|'fixed_incentive'|'incentive_only'
+      ['perks',              Sequelize.ARRAY(Sequelize.TEXT)], // array of perk strings
+      ['has_joining_fee',    Sequelize.BOOLEAN],
+      ['is_night_shift',     Sequelize.BOOLEAN],
+      ['english_level',      Sequelize.STRING(50)],  // 'no_english'|'basic_english'|'good_english'
+      ['experience_type',    Sequelize.STRING(50)],  // 'any'|'experienced_only'|'fresher_only'
+      ['is_walkin',          Sequelize.BOOLEAN],
+      ['contact_preference', Sequelize.STRING(100)], // 'to_myself'|'to_other'|'no_contact'
+      ['plan_type',          Sequelize.STRING(50)],  // 'classic'|'premium'|'super_premium'
+      ['is_paid',            Sequelize.BOOLEAN],
+      ['razorpay_payment_id', Sequelize.STRING(255)],
+    ];
+    for (const [name, type] of cols) {
+      await queryInterface.addColumn('jobs', name, { type, allowNull: true });
+    }
+  },
+  async down(queryInterface) {
+    const cols = ['work_location_type','pay_type','perks','has_joining_fee',
+      'is_night_shift','english_level','experience_type','is_walkin',
+      'contact_preference','plan_type','is_paid','razorpay_payment_id'];
+    for (const col of cols) await queryInterface.removeColumn('jobs', col);
+  },
+};
 ```
 
 ## 6. Seeder Order

@@ -1,6 +1,8 @@
 # BACKEND_SKILL.md — NestJS + Sequelize + PostgreSQL
 
-> Read this before starting Phase 0, 1, 2, 3, or 4.
+> Read this before starting Phase 0, 1, 2, 3, 4, or 13.
+
+**Last updated: 2026-05-29 (Phase 13)**
 
 ---
 
@@ -336,7 +338,92 @@ module.exports = {
 
 ---
 
-## 10. Docker Compose
+## 10. Payments Module (Razorpay) — Phase 13
+
+```bash
+npm install razorpay
+```
+
+Add to `.env`:
+```
+RAZORPAY_KEY_ID=rzp_test_REPLACE_WITH_YOUR_KEY
+RAZORPAY_KEY_SECRET=REPLACE_WITH_YOUR_SECRET
+```
+
+**Mock mode**: If `RAZORPAY_KEY_ID` starts with `rzp_test_REPLACE`, the service returns a fake order and skips signature verification — no real account needed for development.
+
+```typescript
+// payments.service.ts
+const Razorpay = require('razorpay');
+
+@Injectable()
+export class PaymentsService {
+  private razorpay: any;
+
+  constructor(@InjectModel(Job) private jobModel: typeof Job) {
+    this.razorpay = new Razorpay({
+      key_id: process.env.RAZORPAY_KEY_ID,
+      key_secret: process.env.RAZORPAY_KEY_SECRET,
+    });
+  }
+
+  async createOrder(plan: string) {
+    const prices = { classic: 699, premium: 1399, super_premium: 2799 };
+    const amount = prices[plan];
+    const isMock = !process.env.RAZORPAY_KEY_ID?.startsWith('rzp_') ||
+                   process.env.RAZORPAY_KEY_ID?.includes('REPLACE');
+    if (isMock) {
+      return { id: `mock_order_${Date.now()}`, amount: amount * 100, mock: true };
+    }
+    return this.razorpay.orders.create({ amount: amount * 100, currency: 'INR' });
+  }
+
+  async verifyAndPublishJob(jobData: any, companyId: string, payment: any) {
+    // Verify Razorpay signature (skip for mock)
+    if (!payment.razorpay_order_id?.startsWith('mock_')) {
+      const body = `${payment.razorpay_order_id}|${payment.razorpay_payment_id}`;
+      const expectedSig = crypto.createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
+        .update(body).digest('hex');
+      if (expectedSig !== payment.razorpay_signature)
+        throw new BadRequestException('Payment verification failed');
+    }
+    return this.jobModel.create({ ...jobData, company_id: companyId, is_paid: true });
+  }
+}
+```
+
+Endpoints:
+- `GET  /api/payments/plans` — returns price map (public)
+- `POST /api/payments/create-order` — creates Razorpay order (employer only)
+- `POST /api/payments/publish-job` — verifies payment + creates job (employer only)
+
+---
+
+## 11. Advanced Job Fields (Phase 13 Migration)
+
+New columns added to `jobs` table via migration `20260529200000-add-advanced-job-fields`:
+
+```typescript
+// In Job model
+@Column({ type: DataType.STRING(50) }) declare work_location_type: string; // 'work_from_office'|'work_from_home'|'field_job'
+@Column({ type: DataType.STRING(50) }) declare pay_type: string;           // 'fixed_only'|'fixed_incentive'|'incentive_only'
+@Column({ type: DataType.ARRAY(DataType.TEXT), defaultValue: [] }) declare perks: string[];
+@Column({ type: DataType.BOOLEAN, defaultValue: false }) declare has_joining_fee: boolean;
+@Column({ type: DataType.BOOLEAN, defaultValue: false }) declare is_night_shift: boolean;
+@Column({ type: DataType.STRING(50) }) declare english_level: string;    // 'no_english'|'basic_english'|'good_english'
+@Column({ type: DataType.STRING(50) }) declare experience_type: string;  // 'any'|'experienced_only'|'fresher_only'
+@Column({ type: DataType.BOOLEAN, defaultValue: false }) declare is_walkin: boolean;
+@Column({ type: DataType.STRING(100) }) declare contact_preference: string;
+@Column({ type: DataType.STRING(50) }) declare plan_type: string;         // 'classic'|'premium'|'super_premium'
+@Column({ type: DataType.BOOLEAN, defaultValue: false }) declare is_paid: boolean;
+@Column({ type: DataType.STRING(255) }) declare razorpay_payment_id: string;
+```
+
+Run migration: `DB_PASSWORD=<pwd> npx sequelize-cli db:migrate`
+
+---
+
+## 12. Docker Compose
 
 ```yaml
 version: '3.8'

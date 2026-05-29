@@ -1,6 +1,6 @@
 # Apna Clone — Job Portal
 
-Full-stack job portal clone of [apna.co](https://apna.co) built with React 18, NestJS, PostgreSQL, and JWT authentication.
+Full-stack job portal clone of [apna.co](https://apna.co) built with React 18, NestJS, PostgreSQL, JWT authentication, and Razorpay payment integration.
 
 ## Tech Stack
 
@@ -9,34 +9,59 @@ Full-stack job portal clone of [apna.co](https://apna.co) built with React 18, N
 | Frontend | React 18, TypeScript, Redux Toolkit, Tailwind CSS, React Router v6 |
 | Backend | NestJS, Sequelize ORM, PostgreSQL |
 | Auth | JWT (15min access + 7-day refresh tokens stored in DB) |
+| Payments | Razorpay (with dev mock mode — no keys required for testing) |
 | Validation | class-validator (backend), react-hook-form + yup (frontend) |
 
 ## Project Structure
 
 ```
 apna-clone/
-├── backend/                   # NestJS app (port 3001)
+├── backend/                   # NestJS app (port 5000)
 │   ├── src/
-│   │   ├── modules/           # auth, jobs, applications, companies, candidates...
-│   │   ├── common/            # guards, decorators, filters
-│   │   ├── config/            # database, JWT config
+│   │   ├── modules/
+│   │   │   ├── auth/          # JWT auth (register, login, refresh, logout)
+│   │   │   ├── jobs/          # Job CRUD + full filter/search
+│   │   │   ├── applications/  # Apply, status updates
+│   │   │   ├── companies/     # Employer company profile
+│   │   │   ├── candidates/    # Candidate profile, work exp, education, certs
+│   │   │   ├── categories/    # Job categories lookup
+│   │   │   ├── cities/        # Cities lookup
+│   │   │   └── payments/      # Razorpay order creation + job publishing
+│   │   ├── common/            # Guards, decorators, filters
+│   │   ├── config/            # Database, JWT config
 │   │   └── main.ts
-│   ├── migrations/            # Sequelize migrations (8 tables)
+│   ├── migrations/            # 9 Sequelize migrations
 │   ├── seeders/               # 40 categories, 30 cities, 50 sample jobs
 │   └── .env
-├── frontend/                  # React app (port 3000)
+├── frontend/                  # React app (port 3001)
 │   ├── src/
 │   │   ├── app/               # Redux store
-│   │   ├── features/          # authSlice, jobsSlice, applicationsSlice, uiSlice
-│   │   ├── pages/             # 10 route-level page components
-│   │   ├── components/        # Navbar, Footer, ProtectedRoute
+│   │   ├── features/          # authSlice, jobsSlice, applicationsSlice, candidateSlice, uiSlice
+│   │   ├── pages/
+│   │   │   ├── Home.tsx           # Landing page
+│   │   │   ├── Jobs.tsx           # Job listing + filters
+│   │   │   ├── JobDetail.tsx      # Job detail + apply
+│   │   │   ├── CandidateDashboard.tsx  # Candidate profile management
+│   │   │   ├── EmployerLogin.tsx  # Standalone employer login (apna-style)
+│   │   │   ├── EmployerDashboard.tsx   # apnaHire dashboard (collapsible sidebar)
+│   │   │   └── PostJobWizard.tsx  # 5-step job posting + Razorpay payment
+│   │   ├── components/
+│   │   │   ├── Navbar/            # Main site navbar with CandidateAuthModal
+│   │   │   ├── CandidateAuthModal.tsx  # Login/Register modal (no page nav)
+│   │   │   ├── ProtectedRoute.tsx # Role-aware guard with loading state
+│   │   │   └── Modal/             # Generic modal component
 │   │   ├── services/          # Axios API layer with JWT interceptors
 │   │   └── types/             # TypeScript interfaces
 │   └── .env
 ├── docker-compose.yml         # PostgreSQL 15 + Redis 7
-├── CLAUDE.md                  # Master rules
+├── CLAUDE.md                  # Master rules + change log
 ├── PROGRESS.md                # Live progress tracker
-└── PHASES.md                  # Execution guide
+├── PHASES.md                  # Execution guide
+└── SKILLS/                    # Reference skill files
+    ├── BACKEND_SKILL.md
+    ├── FRONTEND_SKILL.md
+    ├── DATABASE_SKILL.md
+    └── AUTH_SKILL.md
 ```
 
 ## Quick Start
@@ -60,10 +85,10 @@ This starts PostgreSQL on port 5432 and Redis on port 6379.
 ```bash
 cd backend
 npm install
-cp .env.example .env          # or use the existing .env
-npx sequelize-cli db:migrate
-npx sequelize-cli db:seed:all
-npm run start:dev              # http://localhost:3001
+# Edit .env — set DB_PASSWORD, JWT secrets, and optionally Razorpay keys
+DB_PASSWORD=1234 npx sequelize-cli db:migrate
+DB_PASSWORD=1234 npx sequelize-cli db:seed:all
+npm run start:dev              # http://localhost:5000
 ```
 
 ### 3. Frontend
@@ -71,8 +96,10 @@ npm run start:dev              # http://localhost:3001
 ```bash
 cd frontend
 npm install
-npm start                      # http://localhost:3000
+npm start                      # http://localhost:3001
 ```
+
+> **Note:** Ports changed — backend runs on **5000**, frontend on **3001**.
 
 ## API Endpoints
 
@@ -119,6 +146,13 @@ npm start                      # http://localhost:3000
 | GET | /api/categories | - | All categories |
 | GET | /api/cities | - | All cities |
 
+### Payments (Razorpay)
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | /api/payments/plans | - | Get plan prices |
+| POST | /api/payments/create-order | JWT (employer) | Create Razorpay order |
+| POST | /api/payments/publish-job | JWT (employer) | Verify payment + publish job |
+
 ## API Response Format
 
 All endpoints return:
@@ -135,23 +169,30 @@ All endpoints return:
 
 ### Backend `.env`
 ```
-PORT=3001
+PORT=5000
+NODE_ENV=development
 DB_HOST=localhost
 DB_PORT=5432
 DB_NAME=apna_clone
 DB_USER=postgres
-DB_PASSWORD=password
+DB_PASSWORD=your_db_password
 JWT_ACCESS_SECRET=your_access_secret
 JWT_REFRESH_SECRET=your_refresh_secret
 JWT_ACCESS_EXPIRES=15m
 JWT_REFRESH_EXPIRES=7d
-FRONTEND_URL=http://localhost:3000
+FRONTEND_URL=http://localhost:3001
+RAZORPAY_KEY_ID=rzp_test_REPLACE_WITH_YOUR_KEY
+RAZORPAY_KEY_SECRET=REPLACE_WITH_YOUR_SECRET
 ```
 
 ### Frontend `.env`
 ```
-REACT_APP_API_URL=http://localhost:3001/api
+REACT_APP_API_URL=http://localhost:5000/api
+PORT=3001
+REACT_APP_RAZORPAY_KEY_ID=rzp_test_REPLACE_WITH_YOUR_KEY
 ```
+
+> **Razorpay Dev Mode:** If `RAZORPAY_KEY_ID` contains the placeholder value, the backend automatically uses **mock mode** — no real payment is processed and jobs are published immediately. Replace keys with real Razorpay test keys from [dashboard.razorpay.com](https://dashboard.razorpay.com) to enable the payment popup.
 
 ## Seed Data
 
@@ -168,3 +209,54 @@ After running migrations and seeders:
 - `RolesGuard` — checks user role (candidate/employer/admin)
 - `@Roles('employer')` decorator — restrict endpoint to specific role
 - `@CurrentUser()` decorator — extract user from JWT payload
+
+---
+
+## Employer Flow
+
+| URL | Description |
+|-----|-------------|
+| `/employer/login` | Standalone dark-themed login (apna.co design) |
+| `/employer/dashboard` | apnaHire dashboard — collapsible sidebar, jobs list, avatar dropdown |
+| `/employer/post-job` | 5-step job posting wizard with Razorpay payment |
+
+### 5-Step Job Posting Wizard
+1. **Job Details** — title, job type pills, work location, salary, 18 perks
+2. **Candidate Requirements** — education, English level, experience, skills, description
+3. **Interviewer Info** — walk-in interview, communication preference
+4. **Job Preview** — summary with edit links back to each step
+5. **Publish + Payment** — Classic (₹699) / Premium (₹1399) / Super Premium (₹2799) plans
+
+---
+
+## Candidate Login Modal
+
+"Candidate Login" in the Navbar opens a modal overlay (no page navigation) with:
+- **Login tab** — email + password with show/hide toggle
+- **Register tab** — full name, email, phone, password
+- Closes on backdrop click, Escape key, or ✕ button
+- Employer accounts are blocked from logging in via this modal
+
+---
+
+## Database Migrations
+
+Run order:
+```bash
+DB_PASSWORD=<pwd> npx sequelize-cli db:migrate
+```
+
+Migrations (in order):
+1. `create-users`
+2. `create-candidate-profiles`
+3. `create-companies`
+4. `create-categories`
+5. `create-cities`
+6. `create-jobs`
+7. `create-applications`
+8. `create-refresh-tokens`
+9. `add-columns-to-candidate-profiles`
+10. `create-work-experiences`
+11. `create-educations`
+12. `create-certifications`
+13. `add-advanced-job-fields` ← new in Phase 13 (perks, pay_type, Razorpay fields, etc.)

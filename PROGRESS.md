@@ -8,19 +8,21 @@
 ## 📊 Overall Progress
 
 ```
-Phase 0: ✅✅✅✅✅✅  100%  — Scaffolding & Setup
-Phase 1: ✅✅✅✅✅✅  100%  — Database Schema & Seeders
-Phase 2: ✅✅✅✅✅✅  100%  — Backend Auth
-Phase 3: ✅✅✅✅✅✅  100%  — Backend Jobs
-Phase 4: ✅✅✅✅✅✅  100%  — Backend Applications & Companies
-Phase 5: ✅✅✅✅✅✅  100%  — Frontend Foundation
-Phase 6: ✅✅✅✅✅✅  100%  — Frontend Auth Pages
-Phase 7: ✅✅✅✅✅✅  100%  — Frontend Home Page
+Phase  0: ✅✅✅✅✅✅  100%  — Scaffolding & Setup
+Phase  1: ✅✅✅✅✅✅  100%  — Database Schema & Seeders
+Phase  2: ✅✅✅✅✅✅  100%  — Backend Auth
+Phase  3: ✅✅✅✅✅✅  100%  — Backend Jobs
+Phase  4: ✅✅✅✅✅✅  100%  — Backend Applications & Companies
+Phase  5: ✅✅✅✅✅✅  100%  — Frontend Foundation
+Phase  6: ✅✅✅✅✅✅  100%  — Frontend Auth Pages
+Phase  7: ✅✅✅✅✅✅  100%  — Frontend Home Page
 Phase  8: ✅✅✅✅✅✅  100%  — Frontend Jobs Listing
 Phase  9: ✅✅✅✅✅✅  100%  — Frontend Job Detail & Apply
 Phase 10: ✅✅✅✅✅✅  100%  — Candidate Dashboard
 Phase 11: ✅✅✅✅✅✅  100%  — Employer Dashboard
 Phase 12: ✅✅✅✅✅✅  100%  — Polish & Deployment
+Phase 13: ✅✅✅✅✅✅  100%  — UI Overhaul (Employer Flow + Payments)
+Phase 14: ✅✅✅✅✅✅  100%  — Auth UX (Modal Login + Reload Fix)
 ```
 
 ---
@@ -295,6 +297,42 @@ Phase 12: ✅✅✅✅✅✅  100%  — Polish & Deployment
 
 ---
 
+## Phase 13 — UI Overhaul (Employer Flow + Payments)
+
+| Step | Task | Status | Notes |
+|------|------|--------|-------|
+| 13.1 | Create `EmployerLoginPage` (standalone dark-theme apna-style) | ✅ | `/employer/login` route |
+| 13.2 | Rebuild `EmployerDashboard` — collapsible sidebar, avatar dropdown | ✅ | Matches apnaHire design |
+| 13.3 | Create `PostJobWizard` — 5-step job posting flow | ✅ | Steps: details, requirements, interview, preview, payment |
+| 13.4 | Backend: `PaymentsModule` with Razorpay integration | ✅ | Mock mode for dev (no keys needed) |
+| 13.5 | New migration: `add-advanced-job-fields` (12 new columns) | ✅ | perks[], pay_type, work_location_type, is_paid, razorpay_payment_id, etc. |
+| 13.6 | Update `CreateJobDto` with new fields | ✅ | |
+| 13.7 | Update `Job` Sequelize model with new @Column fields | ✅ | |
+| 13.8 | Routing: employer routes standalone (no shared Navbar/Footer) | ✅ | |
+| 13.9 | Role-based routing: employer → `/employer/dashboard`, not `/` | ✅ | |
+| 13.10 | Sidebar toggle: collapse/expand on desktop | ✅ | |
+| 13.11 | Avatar dropdown: View profile + Sign out | ✅ | Shows company name + phone |
+| 13.12 | `ProtectedRoute`: employer on candidate route → redirect to employer dashboard | ✅ | |
+
+**Phase 13 Complete?** ✅ YES
+
+---
+
+## Phase 14 — Auth UX (Modal Login + Reload Fix)
+
+| Step | Task | Status | Notes |
+|------|------|--------|-------|
+| 14.1 | Create `CandidateAuthModal` component | ✅ | Login + Register tabs, show/hide password, backdrop close, Escape key |
+| 14.2 | Wire Navbar "Candidate Login" to modal (not page nav) | ✅ | Both desktop and mobile |
+| 14.3 | Fix `ProtectedRoute` reload bug | ✅ | Added loading guard: shows spinner while `loadCurrentUser()` pending |
+| 14.4 | Fix `EmployerLoginPage` reload bug | ✅ | Redirect if already authenticated, spinner during hydration |
+| 14.5 | Block employer accounts from candidate modal | ✅ | Error toast if employer tries to login via candidate modal |
+| 14.6 | Fix hooks-rules-of-hooks: `useForm` before conditional return | ✅ | |
+
+**Phase 14 Complete?** ✅ YES
+
+---
+
 ## 🐛 Issues / Blockers Log
 
 | Date | Issue | Status | Resolution |
@@ -306,9 +344,18 @@ Phase 12: ✅✅✅✅✅✅  100%  — Polish & Deployment
 | 2026-05-26 | JWT strategy missing companyId/candidateId | ✅ Resolved | Added direct DB queries for Company and CandidateProfile |
 | 2026-05-26 | Application model missing `applied_at` column definition | ✅ Resolved | Added @Column for applied_at |
 | 2026-05-26 | Eager loading `include: [{ model: Company }]` not binding in ApplicationsModule | ✅ Resolved | Replaced with direct companyModel.findByPk query |
+| 2026-05-29 | ENOSPC: System limit for file watchers reached | ✅ Resolved | `echo fs.inotify.max_user_watches=524288 >> /etc/sysctl.conf && sysctl -p` |
+| 2026-05-29 | ProtectedRoute redirects on page reload (user null before loadCurrentUser) | ✅ Resolved | Added `isAuthenticated && !user && loading` spinner guard |
+| 2026-05-29 | TS2802: Set<string> spread with downlevelIteration | ✅ Resolved | Changed `[...new Set()]` to `Array.from(new Set())` |
+| 2026-05-29 | react-hooks/rules-of-hooks: useForm called after conditional return | ✅ Resolved | Moved useForm call above early return |
 
 ---
 
 ## 📝 Notes & Decisions
 
-_Add any architectural decisions, trade-offs, or important notes here._
+- **Ports**: Backend on 5000, Frontend on 3001 (changed from 3001/3000)
+- **Razorpay**: Mock mode auto-activates when key contains placeholder string — no account needed for dev
+- **Employer login**: Standalone full-page route (no shared Navbar/Footer) so it can have its own dark theme
+- **Candidate login**: Modal overlay instead of page navigation — better UX, stays on current page after login
+- **ProtectedRoute reload fix**: Must check `loading` state before making role-based redirect decisions
+- **Migration password**: Run as `DB_PASSWORD=1234 npx sequelize-cli db:migrate` since .env not auto-loaded by CLI

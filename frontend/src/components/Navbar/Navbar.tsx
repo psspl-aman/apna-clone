@@ -4,6 +4,7 @@ import { useAppSelector, useAppDispatch } from '../../app/hooks';
 import { logoutUser } from '../../features/auth/authSlice';
 import { Briefcase, ChevronDown, LogOut, User, Menu, X } from 'lucide-react';
 import { JobsDropdown } from './JobsDropdown';
+import { CandidateAuthModal } from '../CandidateAuthModal';
 
 export const Navbar = () => {
   const { user, isAuthenticated } = useAppSelector((s) => s.auth);
@@ -12,6 +13,11 @@ export const Navbar = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [jobsOpen, setJobsOpen] = useState(false);
+  const [authModal, setAuthModal] = useState<{ open: boolean; tab: 'login' | 'register' }>({ open: false, tab: 'login' });
+
+  const openLogin = () => setAuthModal({ open: true, tab: 'login' });
+  const openRegister = () => setAuthModal({ open: true, tab: 'register' });
+  const closeAuth = () => setAuthModal((s) => ({ ...s, open: false }));
 
   const handleLogout = async () => {
     await dispatch(logoutUser());
@@ -19,6 +25,7 @@ export const Navbar = () => {
   };
 
   return (
+    <>
     <nav className="bg-white shadow-sm border-b sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
@@ -142,12 +149,12 @@ export const Navbar = () => {
                 >
                   Employer Login
                 </Link>
-                <Link
-                  to="/login"
+                <button
+                  onClick={openLogin}
                   className="px-4 py-2 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-600"
                 >
                   Candidate Login
-                </Link>
+                </button>
               </>
             )}
           </div>
@@ -184,11 +191,18 @@ export const Navbar = () => {
           ) : (
             <>
               <Link to="/employer/login" className="block px-4 py-2 text-sm text-primary border border-primary rounded text-center" onClick={() => setMobileMenuOpen(false)}>Employer Login</Link>
-              <Link to="/login" className="block px-4 py-2 text-sm text-white bg-primary rounded text-center" onClick={() => setMobileMenuOpen(false)}>Candidate Login</Link>
+              <button onClick={() => { openLogin(); setMobileMenuOpen(false); }} className="block w-full px-4 py-2 text-sm text-white bg-primary rounded text-center">Candidate Login</button>
             </>
           )}
         </div>
       )}
     </nav>
-  );
+
+    {/* Candidate auth modal */}
+    <CandidateAuthModal
+      isOpen={authModal.open}
+      defaultTab={authModal.tab}
+      onClose={closeAuth}
+    />
+  </>);
 };
