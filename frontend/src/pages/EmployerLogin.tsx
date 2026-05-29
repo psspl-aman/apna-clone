@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
@@ -19,16 +19,36 @@ export const EmployerLoginPage = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const location = useLocation();
-  const { loading } = useAppSelector((s) => s.auth);
+  const { loading, isAuthenticated, user } = useAppSelector((s) => s.auth);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const from = (location.state as any)?.from?.pathname || '/employer/dashboard';
+
+  // If already logged in, redirect to correct dashboard
+  useEffect(() => {
+    if (!loading && isAuthenticated && user) {
+      if (user.role === 'employer') {
+        navigate('/employer/dashboard', { replace: true });
+      } else {
+        navigate('/', { replace: true }); // candidate shouldn't be on employer login
+      }
+    }
+  }, [isAuthenticated, user, loading, navigate]);
 
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm<LoginForm>({ resolver: yupResolver(loginSchema) });
+
+  // Still re-hydrating auth state — show spinner instead of login form
+  if (isAuthenticated && !user && loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#1a0630' }}>
+        <div className="h-10 w-10 border-4 border-[#1a7d4e] border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   const onSubmit = async (data: LoginForm) => {
     const result = await dispatch(loginUser(data));

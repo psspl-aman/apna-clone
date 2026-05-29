@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../app/hooks';
 import { logoutUser } from '../features/auth/authSlice';
 import api from '../services/api';
@@ -7,9 +7,9 @@ import { jobsService } from '../services/jobs.service';
 import toast from 'react-hot-toast';
 import {
   Briefcase, BarChart2, CreditCard, FileText, Gift,
-  HelpCircle, Phone, Building, LogOut, Plus, MoreVertical,
-  Menu, X, ChevronDown, Users, Trash2, Edit, Eye, MapPin,
-  Calendar, User, CheckCircle, AlertCircle, Settings,
+  HelpCircle, Phone, LogOut, Plus, MoreVertical,
+  Menu, X, ChevronDown, Trash2, Eye, MapPin,
+  Calendar, User, CheckCircle, AlertCircle,
 } from 'lucide-react';
 
 type View = 'jobs' | 'post-job' | 'company' | 'reports' | 'billing';
@@ -26,7 +26,9 @@ const NAV_ITEMS = [
 
 export const EmployerDashboard = ({ defaultView = 'jobs' }: { defaultView?: View }) => {
   const [activeView, setActiveView] = useState<View>(defaultView);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false); // desktop collapse
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false); // mobile overlay
+  const [avatarOpen, setAvatarOpen] = useState(false);
   const [company, setCompany] = useState<any>(null);
   const [jobs, setJobs] = useState<any[]>([]);
   const [applicationCounts, setApplicationCounts] = useState<Record<string, number>>({});
@@ -37,6 +39,7 @@ export const EmployerDashboard = ({ defaultView = 'jobs' }: { defaultView?: View
   const [postingJob, setPostingJob] = useState(false);
   const [savingCompany, setSavingCompany] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const avatarRef = useRef<HTMLDivElement>(null);
 
   const { user } = useAppSelector((s) => s.auth);
   const dispatch = useAppDispatch();
@@ -52,6 +55,9 @@ export const EmployerDashboard = ({ defaultView = 'jobs' }: { defaultView?: View
     const handler = (e: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
         setOpenMenu(null);
+      }
+      if (avatarRef.current && !avatarRef.current.contains(e.target as Node)) {
+        setAvatarOpen(false);
       }
     };
     document.addEventListener('mousedown', handler);
@@ -187,79 +193,80 @@ export const EmployerDashboard = ({ defaultView = 'jobs' }: { defaultView?: View
   };
 
   const companyInitial = company?.name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || 'E';
-  const userInitial = user?.email?.[0]?.toUpperCase() || 'U';
+  const userInitial = (company?.name?.[0] || user?.email?.[0] || 'E').toUpperCase();
+  const displayName = company?.name || user?.email || 'Employer';
+  const displayPhone = (user as any)?.phone || user?.email || '';
 
   /* ──────────────────────── RENDER ──────────────────────── */
   return (
     <div className="flex h-screen overflow-hidden bg-[#f5f5f5]">
 
       {/* ── Mobile sidebar overlay ── */}
-      {sidebarOpen && (
+      {mobileSidebarOpen && (
         <div
           className="fixed inset-0 bg-black/40 z-40 md:hidden"
-          onClick={() => setSidebarOpen(false)}
+          onClick={() => setMobileSidebarOpen(false)}
         />
       )}
 
       {/* ══════════════ LEFT SIDEBAR ══════════════ */}
       <aside
-        className={`fixed md:static inset-y-0 left-0 z-50 w-56 bg-white border-r flex flex-col transition-transform duration-300 ${
-          sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
-        }`}
+        className={`fixed md:static inset-y-0 left-0 z-50 bg-white border-r flex flex-col transition-all duration-300 ${
+          mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
+        } ${
+          sidebarCollapsed ? 'md:w-16' : 'md:w-56'
+        } w-56`}
       >
         {/* Company section */}
-        <div className="p-4 border-b">
-          <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-md bg-gray-800 text-white flex items-center justify-center font-bold text-sm flex-shrink-0">
-              {companyInitial}
-            </div>
+        <div className={`border-b flex items-center gap-3 ${
+          sidebarCollapsed ? 'p-3 justify-center' : 'p-4'
+        }`}>
+          <div className="h-10 w-10 rounded-md bg-gray-800 text-white flex items-center justify-center font-bold text-sm flex-shrink-0"
+            title={sidebarCollapsed ? (company?.name || 'Your Company') : ''}>
+            {companyInitial}
+          </div>
+          {!sidebarCollapsed && (
             <div className="min-w-0">
               <p className="font-semibold text-gray-900 text-sm truncate">
                 {company?.name || 'Your Company'}
               </p>
               <p className="text-xs text-gray-400 truncate">{company?.city || ''}</p>
             </div>
-          </div>
+          )}
         </div>
 
         {/* Nav items */}
         <nav className="flex-1 py-2 overflow-y-auto">
-          {/* Jobs — always active-able */}
-          <button
-            onClick={() => { setActiveView('jobs'); setSidebarOpen(false); }}
-            className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium transition-colors ${
-              activeView === 'jobs'
-                ? 'bg-[#e8f5ef] text-[#1a7d4e] border-r-2 border-[#1a7d4e]'
-                : 'text-gray-600 hover:bg-gray-50'
-            }`}
-          >
-            <Briefcase className="h-5 w-5 flex-shrink-0" />
-            Jobs
-          </button>
-
-          {NAV_ITEMS.slice(1).map((item) => {
+          {NAV_ITEMS.map((item) => {
             const Icon = item.icon;
             const isActive = activeView === item.id;
-            const clickable = ['reports', 'billing', 'billing2'].includes(item.id);
+            const clickable = ['jobs', 'reports', 'billing', 'billing2'].includes(item.id);
             return (
               <button
                 key={item.id}
+                title={sidebarCollapsed ? item.label : ''}
                 onClick={() => {
                   if (clickable) setActiveView(item.id as View);
-                  setSidebarOpen(false);
+                  setMobileSidebarOpen(false);
                 }}
-                className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium transition-colors ${
+                className={`w-full flex items-center py-2.5 text-sm font-medium transition-colors ${
+                  sidebarCollapsed ? 'justify-center px-0' : 'gap-3 px-4'
+                } ${
                   isActive
                     ? 'bg-[#e8f5ef] text-[#1a7d4e] border-r-2 border-[#1a7d4e]'
                     : 'text-gray-600 hover:bg-gray-50'
                 }`}
               >
                 <Icon className="h-5 w-5 flex-shrink-0" />
-                <span className="flex-1 text-left">{item.label}</span>
-                {item.badge && (
-                  <span className="text-xs bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded-full">
-                    {item.badge}
-                  </span>
+                {!sidebarCollapsed && (
+                  <>
+                    <span className="flex-1 text-left">{item.label}</span>
+                    {item.badge && (
+                      <span className="text-xs bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded-full">
+                        {item.badge}
+                      </span>
+                    )}
+                  </>
                 )}
               </button>
             );
@@ -268,17 +275,27 @@ export const EmployerDashboard = ({ defaultView = 'jobs' }: { defaultView?: View
 
         {/* Bottom section */}
         <div className="p-3 border-t space-y-2">
-          <div className="flex items-center justify-center gap-1.5 bg-gradient-to-r from-orange-400 to-pink-500 text-white text-xs font-bold px-3 py-2 rounded-full">
-            <span>🏷️</span> Up to 53% OFF
-          </div>
-          <button className="w-full flex items-center justify-center gap-2 border border-gray-300 text-gray-700 text-sm font-medium py-2 rounded-lg hover:bg-gray-50 transition-colors">
-            <CreditCard className="h-4 w-4" /> Buy credits
+          {!sidebarCollapsed && (
+            <div className="flex items-center justify-center gap-1.5 bg-gradient-to-r from-orange-400 to-pink-500 text-white text-xs font-bold px-3 py-2 rounded-full">
+              <span>🏷️</span> Up to 53% OFF
+            </div>
+          )}
+          <button
+            title={sidebarCollapsed ? 'Buy credits' : ''}
+            className={`w-full flex items-center border border-gray-300 text-gray-700 text-sm font-medium py-2 rounded-lg hover:bg-gray-50 transition-colors ${
+              sidebarCollapsed ? 'justify-center px-0' : 'justify-center gap-2'
+            }`}>
+            <CreditCard className="h-4 w-4" />
+            {!sidebarCollapsed && 'Buy credits'}
           </button>
           <button
+            title={sidebarCollapsed ? 'Sign out' : ''}
             onClick={handleLogout}
-            className="w-full flex items-center justify-center gap-2 text-red-500 text-sm font-medium py-2 rounded-lg hover:bg-red-50 transition-colors"
-          >
-            <LogOut className="h-4 w-4" /> Logout
+            className={`w-full flex items-center text-red-500 text-sm font-medium py-2 rounded-lg hover:bg-red-50 transition-colors ${
+              sidebarCollapsed ? 'justify-center px-0' : 'justify-center gap-2'
+            }`}>
+            <LogOut className="h-4 w-4" />
+            {!sidebarCollapsed && 'Sign out'}
           </button>
         </div>
       </aside>
@@ -289,11 +306,18 @@ export const EmployerDashboard = ({ defaultView = 'jobs' }: { defaultView?: View
         {/* ── Top Header ── */}
         <header className="bg-white border-b px-4 md:px-6 h-14 flex items-center justify-between flex-shrink-0">
           <div className="flex items-center gap-3">
+            {/* Hamburger — mobile opens overlay, desktop collapses sidebar */}
             <button
-              className="md:hidden p-1 text-gray-600"
-              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="p-1.5 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors"
+              onClick={() => {
+                if (window.innerWidth < 768) {
+                  setMobileSidebarOpen(!mobileSidebarOpen);
+                } else {
+                  setSidebarCollapsed(!sidebarCollapsed);
+                }
+              }}
             >
-              {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+              <Menu className="h-5 w-5" />
             </button>
             <Link to="/" className="text-lg font-bold">
               <span style={{ color: '#1a7d4e' }}>apna</span>
@@ -306,9 +330,53 @@ export const EmployerDashboard = ({ defaultView = 'jobs' }: { defaultView?: View
               <CreditCard className="h-4 w-4" />
               Available Credits
             </button>
-            <div className="h-8 w-8 rounded-full flex items-center justify-center text-white text-sm font-bold"
-              style={{ backgroundColor: '#7c3aed' }}>
-              {userInitial}
+
+            {/* Avatar with dropdown */}
+            <div className="relative" ref={avatarRef}>
+              <button
+                onClick={() => setAvatarOpen(!avatarOpen)}
+                className="h-8 w-8 rounded-full flex items-center justify-center text-white text-sm font-bold focus:outline-none"
+                style={{ backgroundColor: '#7c3aed' }}
+              >
+                {userInitial}
+              </button>
+
+              {avatarOpen && (
+                <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl border z-50 overflow-hidden">
+                  {/* User info */}
+                  <div className="flex items-center gap-3 px-4 py-3 border-b">
+                    <div className="h-10 w-10 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0"
+                      style={{ backgroundColor: '#7c3aed' }}>
+                      {userInitial}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-semibold text-gray-900 text-sm truncate">{displayName}</p>
+                      <p className="text-xs text-gray-500 truncate">{displayPhone}</p>
+                    </div>
+                  </div>
+
+                  {/* View profile */}
+                  <button
+                    onClick={() => {
+                      setActiveView('company');
+                      setAvatarOpen(false);
+                    }}
+                    className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                  >
+                    <User className="h-4 w-4 text-gray-500" />
+                    View profile
+                  </button>
+
+                  {/* Sign out */}
+                  <button
+                    onClick={() => { handleLogout(); setAvatarOpen(false); }}
+                    className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    Sign out
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </header>
