@@ -137,7 +137,7 @@ export const Navbar = () => {
             ) : (
               <>
                 <Link
-                  to="/login"
+                  to="/employer/login"
                   className="px-4 py-2 text-sm font-medium text-primary border border-primary rounded-lg hover:bg-primary-50"
                 >
                   Employer Login
@@ -183,7 +183,7 @@ export const Navbar = () => {
             </>
           ) : (
             <>
-              <Link to="/login" className="block px-4 py-2 text-sm text-primary border border-primary rounded text-center" onClick={() => setMobileMenuOpen(false)}>Employer Login</Link>
+              <Link to="/employer/login" className="block px-4 py-2 text-sm text-primary border border-primary rounded text-center" onClick={() => setMobileMenuOpen(false)}>Employer Login</Link>
               <Link to="/login" className="block px-4 py-2 text-sm text-white bg-primary rounded text-center" onClick={() => setMobileMenuOpen(false)}>Candidate Login</Link>
             </>
           )}

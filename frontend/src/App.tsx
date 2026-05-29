@@ -8,6 +8,7 @@ import { loadCurrentUser } from './features/auth/authSlice';
 import { useAppDispatch } from './app/hooks';
 
 import { HomePage } from './pages/Home';
+import { EmployerLoginPage } from './pages/EmployerLogin';
 import { JobsPage } from './pages/Jobs';
 import { JobDetailPage } from './pages/JobDetail';
 import { LoginPage } from './pages/Login';
@@ -34,10 +35,16 @@ function App() {
   return (
     <BrowserRouter>
       <Toaster position="top-right" />
-      <div className="flex flex-col min-h-screen">
-        <Navbar />
-        <main className="flex-1">
-          <Routes>
+      <Routes>
+        {/* Standalone full-page route — no shared Navbar/Footer */}
+        <Route path="/employer/login" element={<EmployerLoginPage />} />
+
+        {/* All other routes wrapped in shared layout */}
+        <Route path="/*" element={
+          <div className="flex flex-col min-h-screen">
+            <Navbar />
+            <main className="flex-1">
+              <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/jobs" element={<JobsPage />} />
             <Route path="/jobs/:id" element={<JobDetailPage />} />
@@ -72,10 +79,12 @@ function App() {
               }
             />
             <Route path="*" element={<NotFoundPage />} />
-          </Routes>
-        </main>
-        <Footer />
-      </div>
+              </Routes>
+            </main>
+            <Footer />
+          </div>
+        } />
+      </Routes>
     </BrowserRouter>
   );
 }
