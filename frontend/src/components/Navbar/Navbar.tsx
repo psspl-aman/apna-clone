@@ -28,9 +28,13 @@ export const Navbar = () => {
               <span className="text-xl font-bold text-gray-900">Apna</span>
             </Link>
 
-            <div className="hidden md:block relative">
-              <button
-                onClick={() => { setJobsOpen(!jobsOpen); setDropdownOpen(false); }}
+            <div
+              className="hidden md:block relative"
+              onMouseEnter={() => { setJobsOpen(true); setDropdownOpen(false); }}
+              onMouseLeave={() => setJobsOpen(false)}
+            >
+              <Link
+                to="/jobs"
                 className={`flex items-center gap-1 text-sm font-medium py-2 ${
                   jobsOpen ? 'text-[#1a7d4e]' : 'text-gray-700'
                 } hover:text-[#1a7d4e] transition-colors`}
@@ -41,7 +45,7 @@ export const Navbar = () => {
                     jobsOpen ? 'rotate-180' : ''
                   }`}
                 />
-              </button>
+              </Link>
               <JobsDropdown isOpen={jobsOpen} onClose={() => setJobsOpen(false)} />
             </div>
 

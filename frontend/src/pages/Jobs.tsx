@@ -39,8 +39,59 @@ export const JobsPage = () => {
     dispatch(setFilter({ [key]: value }));
   };
 
+  const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const form = new FormData(e.currentTarget);
+    const keyword = form.get('keyword') as string;
+    const city = form.get('city') as string;
+    const exp = form.get('experience') as string;
+    dispatch(setFilter({ keyword, city, exp_min: exp ? Number(exp) : 0 }));
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 py-6">
+      {/* Search Bar */}
+      <form onSubmit={handleSearch} className="bg-white border rounded-xl p-3 flex flex-col md:flex-row gap-3 mb-4">
+        <div className="flex-1 relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+          <input
+            type="text"
+            name="keyword"
+            defaultValue={filters.keyword}
+            placeholder="Search for jobs..."
+            className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+          />
+        </div>
+        <div className="w-full md:w-36">
+          <select
+            name="experience"
+            defaultValue={filters.exp_min || ''}
+            className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-white text-gray-700"
+          >
+            <option value="">Experience</option>
+            <option value="0">Fresher</option>
+            <option value="1">1 year</option>
+            <option value="2">2 years</option>
+            <option value="3">3 years</option>
+            <option value="5">5+ years</option>
+            <option value="10">10+ years</option>
+          </select>
+        </div>
+        <div className="flex-1 relative">
+          <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+          <input
+            type="text"
+            name="city"
+            defaultValue={filters.city}
+            placeholder="Enter city"
+            className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+          />
+        </div>
+        <button type="submit" className="bg-primary text-white px-6 py-3 rounded-lg font-medium hover:bg-primary-600 transition-colors">
+          Search
+        </button>
+      </form>
+
       <div className="flex items-center justify-between mb-6">
         <div>
           <p className="text-sm text-gray-500">
