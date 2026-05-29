@@ -16,6 +16,7 @@ import { RegisterPage } from './pages/Register';
 import { CandidateDashboard } from './pages/CandidateDashboard';
 import { EmployerDashboard } from './pages/EmployerDashboard';
 import { PostJobPage } from './pages/PostJob';
+import { PostJobWizard } from './pages/PostJobWizard';
 import { NotFoundPage } from './pages/NotFound';
 import { JobPrepPage } from './pages/JobPrep';
 import { ContestPage } from './pages/Contest';
@@ -36,49 +37,49 @@ function App() {
     <BrowserRouter>
       <Toaster position="top-right" />
       <Routes>
-        {/* Standalone full-page route — no shared Navbar/Footer */}
+        {/* ── Standalone employer pages (own navbar/layout) ── */}
         <Route path="/employer/login" element={<EmployerLoginPage />} />
+        <Route
+          path="/employer/dashboard"
+          element={
+            <ProtectedRoute requiredRole="employer">
+              <EmployerDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/employer/post-job"
+          element={
+            <ProtectedRoute requiredRole="employer">
+              <PostJobWizard />
+            </ProtectedRoute>
+          }
+        />
 
-        {/* All other routes wrapped in shared layout */}
+        {/* ── All other routes with shared Navbar/Footer ── */}
         <Route path="/*" element={
           <div className="flex flex-col min-h-screen">
             <Navbar />
             <main className="flex-1">
               <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/jobs" element={<JobsPage />} />
-            <Route path="/jobs/:id" element={<JobDetailPage />} />
-            <Route path="/job-prep" element={<JobPrepPage />} />
-            <Route path="/contest" element={<ContestPage />} />
-            <Route path="/degree" element={<DegreePage />} />
-            <Route path="/resume-tool" element={<ResumeToolPage />} />
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/register" element={<RegisterPage />} />
-            <Route
-              path="/profile"
-              element={
-                <ProtectedRoute requiredRole="candidate">
-                  <CandidateDashboard />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/employer/dashboard"
-              element={
-                <ProtectedRoute requiredRole="employer">
-                  <EmployerDashboard />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/employer/post-job"
-              element={
-                <ProtectedRoute requiredRole="employer">
-                  <PostJobPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route path="*" element={<NotFoundPage />} />
+                <Route path="/" element={<HomePage />} />
+                <Route path="/jobs" element={<JobsPage />} />
+                <Route path="/jobs/:id" element={<JobDetailPage />} />
+                <Route path="/job-prep" element={<JobPrepPage />} />
+                <Route path="/contest" element={<ContestPage />} />
+                <Route path="/degree" element={<DegreePage />} />
+                <Route path="/resume-tool" element={<ResumeToolPage />} />
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/register" element={<RegisterPage />} />
+                <Route
+                  path="/profile"
+                  element={
+                    <ProtectedRoute requiredRole="candidate">
+                      <CandidateDashboard />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route path="*" element={<NotFoundPage />} />
               </Routes>
             </main>
             <Footer />

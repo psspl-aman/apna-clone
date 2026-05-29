@@ -58,4 +58,41 @@ export class Job extends Model {
 
   @Column({ type: DataType.BOOLEAN, defaultValue: true })
   declare is_active: boolean;
+
+  // ── Advanced posting fields ──
+  @Column({ type: DataType.STRING(50) })
+  declare work_location_type: string;
+
+  @Column({ type: DataType.STRING(50) })
+  declare pay_type: string;
+
+  @Column({ type: DataType.ARRAY(DataType.TEXT), defaultValue: [] })
+  declare perks: string[];
+
+  @Column({ type: DataType.BOOLEAN, defaultValue: false })
+  declare has_joining_fee: boolean;
+
+  @Column({ type: DataType.BOOLEAN, defaultValue: false })
+  declare is_night_shift: boolean;
+
+  @Column({ type: DataType.STRING(50) })
+  declare english_level: string;
+
+  @Column({ type: DataType.STRING(50) })
+  declare experience_type: string;
+
+  @Column({ type: DataType.BOOLEAN, defaultValue: false })
+  declare is_walkin: boolean;
+
+  @Column({ type: DataType.STRING(100) })
+  declare contact_preference: string;
+
+  @Column({ type: DataType.STRING(50) })
+  declare plan_type: string;
+
+  @Column({ type: DataType.BOOLEAN, defaultValue: false })
+  declare is_paid: boolean;
+
+  @Column({ type: DataType.STRING(255) })
+  declare razorpay_payment_id: string;
 }

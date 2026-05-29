@@ -11,6 +11,7 @@ import { CitiesModule } from './modules/cities/cities.module';
 import { ApplicationsModule } from './modules/applications/applications.module';
 import { CompaniesModule } from './modules/companies/companies.module';
 import { CandidatesModule } from './modules/candidates/candidates.module';
+import { PaymentsModule } from './modules/payments/payments.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { CandidatesModule } from './modules/candidates/candidates.module';
     ApplicationsModule,
     CompaniesModule,
     CandidatesModule,
+    PaymentsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -11,7 +11,8 @@ export const ProtectedRoute = ({ children, requiredRole }: Props) => {
   const location = useLocation();
 
   if (!isAuthenticated) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
+    const loginPath = requiredRole === 'employer' ? '/employer/login' : '/login';
+    return <Navigate to={loginPath} state={{ from: location }} replace />;
   }
 
   if (requiredRole && user?.role !== requiredRole) {
