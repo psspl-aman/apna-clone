@@ -3,6 +3,7 @@ import { InjectModel } from '@nestjs/sequelize';
 import { Op, WhereOptions } from 'sequelize';
 import { Job } from './models/job.model';
 import { Company } from '../companies/models/company.model';
+import { SavedJob } from './models/saved-job.model';
 import { CreateJobDto } from './dto/create-job.dto';
 import { UpdateJobDto } from './dto/update-job.dto';
 import { JobFilterDto } from './dto/job-filter.dto';
@@ -11,6 +12,7 @@ import { JobFilterDto } from './dto/job-filter.dto';
 export class JobsService {
   constructor(
     @InjectModel(Job) private readonly jobModel: typeof Job,
+    @InjectModel(SavedJob) private readonly savedJobModel: typeof SavedJob,
   ) {}
 
   async findAll(filters: JobFilterDto) {
@@ -108,5 +110,30 @@ export class JobsService {
       where: { company_id: companyId },
       order: [['created_at', 'DESC']],
     });
+  }
+
+  async saveJob(userId: string, jobId: string) {
+    const [record] = await this.savedJobModel.findOrCreate({
+      where: { user_id: userId, job_id: jobId },
+      defaults: { user_id: userId, job_id: jobId } as any,
+    });
+    return record;
+  }
+
+  async unsaveJob(userId: string, jobId: string) {
+    await this.savedJobModel.destroy({ where: { user_id: userId, job_id: jobId } });
+    return { success: true };
+  }
+
+  async getSavedJobs(userId: string) {
+    const saved = await this.savedJobModel.findAll({
+      where: { user_id: userId },
+      include: [{
+        model: Job,
+        include: [{ model: Company, attributes: ['id', 'name', 'logo_url', 'city'] }],
+      }],
+      order: [['created_at', 'DESC']],
+    });
+    return saved.map((s: any) => s.job).filter(Boolean);
   }
 }

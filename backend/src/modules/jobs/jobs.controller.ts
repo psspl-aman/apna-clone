@@ -26,6 +26,14 @@ export class JobsController {
     return { success: true, message: 'My jobs fetched', data: jobs };
   }
 
+  @Get('saved/list')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('candidate')
+  async getSavedJobs(@CurrentUser('id') userId: string) {
+    const jobs = await this.jobsService.getSavedJobs(userId);
+    return { success: true, message: 'Saved jobs fetched', data: jobs };
+  }
+
   @Get(':id')
   async findById(@Param('id') id: string) {
     const job = await this.jobsService.findById(id);
@@ -38,6 +46,14 @@ export class JobsController {
   async create(@Body() dto: CreateJobDto, @CurrentUser() user: any) {
     const job = await this.jobsService.create(dto, user.companyId);
     return { success: true, message: 'Job created', data: job };
+  }
+
+  @Post(':id/save')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('candidate')
+  async saveJob(@Param('id') jobId: string, @CurrentUser('id') userId: string) {
+    await this.jobsService.saveJob(userId, jobId);
+    return { success: true, message: 'Job saved' };
   }
 
   @Put(':id')
@@ -54,5 +70,13 @@ export class JobsController {
   async delete(@Param('id') id: string, @CurrentUser('id') userId: string) {
     const result = await this.jobsService.delete(id, userId);
     return { success: true, message: 'Job deleted', data: null };
+  }
+
+  @Delete(':id/save')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('candidate')
+  async unsaveJob(@Param('id') jobId: string, @CurrentUser('id') userId: string) {
+    await this.jobsService.unsaveJob(userId, jobId);
+    return { success: true, message: 'Job unsaved' };
   }
 }
