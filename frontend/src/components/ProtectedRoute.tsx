@@ -12,7 +12,9 @@ export const ProtectedRoute = ({ children, requiredRole }: Props) => {
 
   // Token exists but user not yet fetched — wait for loadCurrentUser() to finish
   // This prevents a false redirect on page reload before the API call completes
-  if (isAuthenticated && !user && loading) {
+  // Uses isAuthenticated && !user (without checking loading) to catch the initial
+  // render cycle before loadCurrentUser.pending fires
+  if (isAuthenticated && !user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#f5f5f5]">
         <div className="h-10 w-10 border-4 border-[#1a7d4e] border-t-transparent rounded-full animate-spin" />

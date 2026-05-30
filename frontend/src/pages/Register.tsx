@@ -44,7 +44,7 @@ export const RegisterPage = () => {
     const result = await dispatch(registerEmployer(data));
     if (registerEmployer.fulfilled.match(result)) {
       toast.success('Registration successful!');
-      navigate('/');
+      navigate('/employer/dashboard');
     } else {
       toast.error(result.payload as string);
     }

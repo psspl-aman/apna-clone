@@ -1,4 +1,3 @@
-import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
@@ -15,7 +14,6 @@ const loginSchema = yup.object({
 type LoginForm = yup.InferType<typeof loginSchema>;
 
 export const LoginPage = () => {
-  const [activeTab, setActiveTab] = useState<'candidate' | 'employer'>('candidate');
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const location = useLocation();
@@ -32,8 +30,14 @@ export const LoginPage = () => {
   const onSubmit = async (data: LoginForm) => {
     const result = await dispatch(loginUser(data));
     if (loginUser.fulfilled.match(result)) {
-      toast.success('Login successful!');
-      navigate(from, { replace: true });
+      const user = result.payload as any;
+      if (user?.role === 'employer') {
+        toast.success('Redirecting to employer dashboard...');
+        navigate('/employer/dashboard', { replace: true });
+      } else {
+        toast.success('Login successful!');
+        navigate(from, { replace: true });
+      }
     } else {
       toast.error(result.payload as string);
     }
@@ -44,23 +48,16 @@ export const LoginPage = () => {
       <div className="max-w-md w-full bg-white rounded-2xl shadow-lg p-8">
         <h2 className="text-2xl font-bold text-center text-gray-900 mb-6">Welcome Back</h2>
 
-        <div className="flex mb-6 bg-gray-100 rounded-lg p-1">
-          <button
-            className={`flex-1 py-2 text-sm font-medium rounded-md transition-colors ${
-              activeTab === 'candidate' ? 'bg-white shadow-sm text-primary' : 'text-gray-500'
-            }`}
-            onClick={() => setActiveTab('candidate')}
+        <div className="flex items-center justify-between mb-6 bg-gray-100 rounded-lg p-1">
+          <span className="flex-1 py-2 text-sm font-medium text-center rounded-md bg-white shadow-sm text-primary">
+            Candidate Login
+          </span>
+          <Link
+            to="/employer/login"
+            className="flex-1 py-2 text-sm font-medium text-center rounded-md text-gray-500 hover:text-gray-700 transition-colors"
           >
-            Candidate
-          </button>
-          <button
-            className={`flex-1 py-2 text-sm font-medium rounded-md transition-colors ${
-              activeTab === 'employer' ? 'bg-white shadow-sm text-primary' : 'text-gray-500'
-            }`}
-            onClick={() => setActiveTab('employer')}
-          >
-            Employer
-          </button>
+            Employer Login →
+          </Link>
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">

@@ -4,7 +4,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import { X, Eye, EyeOff } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../app/hooks';
-import { loginUser, registerUser } from '../features/auth/authSlice';
+import { loginUser, registerUser, logout } from '../features/auth/authSlice';
 import toast from 'react-hot-toast';
 
 /* ── Schemas ── */
@@ -64,6 +64,7 @@ export const CandidateAuthModal = ({ isOpen, defaultTab = 'login', onClose }: Pr
     if (loginUser.fulfilled.match(result)) {
       const user = result.payload as any;
       if (user?.role === 'employer') {
+        dispatch(logout());
         toast.error('Please use Employer Login for employer accounts.');
         return;
       }

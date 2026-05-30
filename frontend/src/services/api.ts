@@ -29,6 +29,8 @@ api.interceptors.response.use(
         original.headers.Authorization = `Bearer ${data.data.accessToken}`;
         return api(original);
       } catch {
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
         store.dispatch(logout());
         window.location.href = '/login';
       }

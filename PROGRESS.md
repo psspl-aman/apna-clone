@@ -345,9 +345,15 @@ Phase 14: ✅✅✅✅✅✅  100%  — Auth UX (Modal Login + Reload Fix)
 | 2026-05-26 | Application model missing `applied_at` column definition | ✅ Resolved | Added @Column for applied_at |
 | 2026-05-26 | Eager loading `include: [{ model: Company }]` not binding in ApplicationsModule | ✅ Resolved | Replaced with direct companyModel.findByPk query |
 | 2026-05-29 | ENOSPC: System limit for file watchers reached | ✅ Resolved | `echo fs.inotify.max_user_watches=524288 >> /etc/sysctl.conf && sysctl -p` |
-| 2026-05-29 | ProtectedRoute redirects on page reload (user null before loadCurrentUser) | ✅ Resolved | Added `isAuthenticated && !user && loading` spinner guard |
+| 2026-05-29 | ProtectedRoute redirects on page reload (user null before loadCurrentUser) | ✅ Resolved | Added `isAuthenticated && !user && loading` spinner guard; also set initial `loading: !!localStorage.getItem('accessToken')` so guard fires on first render |
 | 2026-05-29 | TS2802: Set<string> spread with downlevelIteration | ✅ Resolved | Changed `[...new Set()]` to `Array.from(new Set())` |
 | 2026-05-29 | react-hooks/rules-of-hooks: useForm called after conditional return | ✅ Resolved | Moved useForm call above early return |
+| 2026-05-31 | Employer registration redirects to `/` instead of `/employer/dashboard` | ✅ Resolved | Changed `navigate('/')` to `navigate('/employer/dashboard')` in `Register.tsx` `onEmployerSubmit` |
+| 2026-05-31 | Login.tsx employer tab doesn't check role; employer login on `/login` redirects to wrong place | ✅ Resolved | Replaced employer tab with link to `/employer/login`; added role check in `onSubmit` to redirect employers to `/employer/dashboard` |
+| 2026-05-31 | CandidateAuthModal leaves Redux state dirty when employer logs in via candidate modal | ✅ Resolved | Added `dispatch(logout())` before showing error toast to revert isAuthenticated to false |
+| 2026-05-31 | ProtectedRoute loading guard doesn't fire on first render because initial `loading: false` | ✅ Resolved | Changed initial `loading: false` to `loading: !!localStorage.getItem('accessToken')` so spinner shows while `loadCurrentUser()` is pending |
+| 2026-05-31 | ProtectedRoute still redirects to `/` on reload because `user` is null after `loadCurrentUser` resolves | ✅ Resolved | Changed loading guard from `isAuthenticated && !user && loading` to `isAuthenticated && !user` to cover all re-hydration phases regardless of `loading` flag |
+| 2026-05-31 | Axios interceptor doesn't clear localStorage tokens when refresh fails, causing infinite redirect loop on page reload | ✅ Resolved | Added `localStorage.removeItem('accessToken')` and `localStorage.removeItem('refreshToken')` in the catch block before hard redirect |
 
 ---
 
