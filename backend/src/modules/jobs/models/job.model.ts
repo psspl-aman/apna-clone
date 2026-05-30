@@ -69,6 +69,9 @@ export class Job extends Model {
   @Column({ type: DataType.ARRAY(DataType.TEXT), defaultValue: [] })
   declare perks: string[];
 
+  @Column({ type: DataType.ARRAY(DataType.TEXT), defaultValue: [] })
+  declare skills: string[];
+
   @Column({ type: DataType.BOOLEAN, defaultValue: false })
   declare has_joining_fee: boolean;
 

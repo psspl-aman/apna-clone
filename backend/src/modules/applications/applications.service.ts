@@ -33,7 +33,7 @@ export class ApplicationsService {
   async findByCandidate(candidateId: string) {
     return this.applicationModel.findAll({
       where: { candidate_id: candidateId },
-      include: [{ model: Job }],
+      include: [{ model: Job, include: [{ model: Company, attributes: ['id', 'name', 'logo_url', 'city'] }] }],
       order: [['applied_at', 'DESC']],
     });
   }

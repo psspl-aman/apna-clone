@@ -33,4 +33,5 @@ export class CreateJobDto {
   @IsOptional() @IsString() plan_type?: string;
   @IsOptional() @IsBoolean() is_paid?: boolean;
   @IsOptional() @IsString() razorpay_payment_id?: string;
+  @IsOptional() @IsArray() skills?: string[];
 }

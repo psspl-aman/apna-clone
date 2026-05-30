@@ -91,14 +91,22 @@ export interface Job {
   salaryMax?: number;
   experienceMin: number;
   experienceMax?: number;
+  experienceType?: string;       // any | fresher_only | experienced_only
   gender: string;
   education?: string;
   openings: number;
   isActive: boolean;
-  workLocationType?: string;
-  payType?: string;
+  // Advanced fields from PostJobWizard
+  workLocationType?: string;     // work_from_office | work_from_home | field_job
+  payType?: string;              // fixed_only | fixed_incentive | incentive_only
+  perks?: string[];
+  skills?: string[];
+  hasJoiningFee?: boolean;
   isNightShift?: boolean;
-  englishLevel?: string;
+  englishLevel?: string;         // no_english | basic_english | good_english
+  isWalkin?: boolean;
+  contactPreference?: string;
+  planType?: string;
   createdAt: string;
   applicantCount?: number;
 }

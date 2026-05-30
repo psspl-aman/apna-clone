@@ -22,6 +22,7 @@ export class CompaniesController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('employer')
   async update(@CurrentUser('id') userId: string, @Body() dto: UpdateCompanyDto) {
+    console.log(userId, dto,"userId, dto");
     const data = await this.companiesService.update(userId, dto);
     return { success: true, message: 'Company updated', data };
   }

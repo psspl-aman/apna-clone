@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../app/hooks';
 import { fetchFullProfile, updateProfile, uploadResume, addWorkExperience, updateWorkExperience, deleteWorkExperience, addEducation, updateEducation, deleteEducation, addCertification, updateCertification, deleteCertification } from '../features/candidates/candidateSlice';
-import { Briefcase, MapPin, ChevronRight, Plus, Pencil, FileText, Trash2 } from 'lucide-react';
+import { fetchMyApplications } from '../features/applications/applicationsSlice';
+import { Briefcase, MapPin, ChevronRight, Plus, Pencil, FileText, Trash2, Clock, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 import { Modal } from '../components/Modal/Modal';
 import toast from 'react-hot-toast';
 
@@ -33,11 +34,38 @@ const initials = (name?: string) => {
   return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
 };
 
+/* ── Application status helpers ── */
+const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
+  applied:     { label: 'Applied',     color: 'bg-blue-100 text-blue-700',   icon: <Clock className="h-3.5 w-3.5" /> },
+  shortlisted: { label: 'Shortlisted', color: 'bg-green-100 text-green-700', icon: <CheckCircle className="h-3.5 w-3.5" /> },
+  rejected:    { label: 'Rejected',    color: 'bg-red-100 text-red-700',     icon: <XCircle className="h-3.5 w-3.5" /> },
+  hired:       { label: 'Hired 🎉',   color: 'bg-emerald-100 text-emerald-700', icon: <CheckCircle className="h-3.5 w-3.5" /> },
+};
+
+const LOGO_COLORS = [
+  'bg-blue-500','bg-green-600','bg-purple-600','bg-orange-500',
+  'bg-red-500','bg-teal-600','bg-indigo-600','bg-pink-600',
+];
+
+function fmtSalary(v?: number) {
+  if (!v) return 'Not Disclosed';
+  return '₹' + v.toLocaleString('en-IN');
+}
+
+function fmtDate(d?: string) {
+  if (!d) return '';
+  return new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
 export const CandidateDashboard = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = searchParams.get('tab') || 'profile';
+  const [appSubTab, setAppSubTab] = useState<'applied' | 'interview'>('applied');
   const { profile, workExperiences, educations, certifications, profileCompletion, loading, uploadingResume } = useAppSelector((s) => s.candidates);
   const { user } = useAppSelector((s) => s.auth);
+  const { applications, loading: appsLoading } = useAppSelector((s) => s.applications);
   const [activeSection, setActiveSection] = useState<string | null>(null);
   const [editData, setEditData] = useState<any>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -45,6 +73,10 @@ export const CandidateDashboard = () => {
   useEffect(() => {
     dispatch(fetchFullProfile());
   }, [dispatch]);
+
+  useEffect(() => {
+    if (activeTab === 'applications') dispatch(fetchMyApplications());
+  }, [activeTab]);
 
   const openModal = (section: string, data?: any) => {
     setActiveSection(section);
@@ -210,6 +242,153 @@ export const CandidateDashboard = () => {
     if (ok) closeModal();
   };
 
+  /* Applications filtered by status */
+  const appliedList = applications.filter((a) => ['applied', 'shortlisted', 'hired'].includes(a.status));
+  const interviewList = applications.filter((a) => a.status === 'shortlisted');
+
+  /* ── My Applications view ── */
+  const ApplicationsView = () => (
+    <div className="flex-1">
+      <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+        {/* Tabs */}
+        <div className="flex border-b">
+          {[
+            { key: 'applied' as const, label: 'Applied Jobs', count: appliedList.length },
+            { key: 'interview' as const, label: 'Interview Invites', count: interviewList.length },
+          ].map((t) => (
+            <button
+              key={t.key}
+              onClick={() => setAppSubTab(t.key)}
+              className={`flex items-center gap-2 px-6 py-3.5 text-sm font-medium border-b-2 transition-colors ${
+                appSubTab === t.key
+                  ? 'border-[#1a7d4e] text-[#1a7d4e]'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              {t.label}
+              <span className={`text-xs px-2 py-0.5 rounded-full ${
+                appSubTab === t.key ? 'bg-[#e8f5ef] text-[#1a7d4e]' : 'bg-gray-100 text-gray-500'
+              }`}>{t.count}</span>
+            </button>
+          ))}
+        </div>
+
+        <div className="p-4">
+          {appsLoading ? (
+            <div className="space-y-3">
+              {[1,2,3].map((i) => (
+                <div key={i} className="border rounded-lg p-4 animate-pulse">
+                  <div className="flex gap-3">
+                    <div className="h-12 w-12 bg-gray-200 rounded-lg flex-shrink-0" />
+                    <div className="flex-1 space-y-2">
+                      <div className="h-4 bg-gray-200 rounded w-3/4" />
+                      <div className="h-3 bg-gray-200 rounded w-1/2" />
+                      <div className="h-3 bg-gray-200 rounded w-1/3" />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            (() => {
+              const list = appSubTab === 'applied' ? appliedList : interviewList;
+              if (list.length === 0) {
+                return (
+                  <div className="text-center py-16">
+                    <div className="text-5xl mb-4">{appSubTab === 'interview' ? '📅' : '📋'}</div>
+                    <p className="text-gray-600 font-medium">
+                      {appSubTab === 'interview' ? 'No interview invites yet' : 'No applications yet'}
+                    </p>
+                    <p className="text-sm text-gray-400 mt-1">
+                      {appSubTab === 'interview' ? 'Shortlisted jobs will appear here' : 'Jobs you apply to will appear here'}
+                    </p>
+                    <Link to="/jobs" className="mt-4 inline-block bg-[#1a7d4e] text-white px-6 py-2 rounded-lg text-sm font-medium hover:bg-[#166534]">
+                      Browse Jobs
+                    </Link>
+                  </div>
+                );
+              }
+              return (
+                <div className="space-y-3">
+                  {list.map((app, idx) => {
+                    const j = app.job;
+                    const statusCfg = STATUS_CONFIG[app.status] || STATUS_CONFIG.applied;
+                    const lc = LOGO_COLORS[(j?.company?.name?.charCodeAt(0) || idx) % LOGO_COLORS.length];
+                    return (
+                      <div key={app.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-shadow">
+                        <div className="flex items-start gap-3">
+                          {/* Logo */}
+                          <div className={`h-12 w-12 ${lc} rounded-lg flex items-center justify-center flex-shrink-0 text-white font-bold text-lg`}>
+                            {(j?.company?.name?.[0] || 'C').toUpperCase()}
+                          </div>
+
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="min-w-0">
+                                <Link
+                                  to={`/jobs/${j?.id}`}
+                                  className="text-sm font-semibold text-gray-900 hover:text-[#1a7d4e] truncate block"
+                                >
+                                  {j?.title || 'Job no longer available'}
+                                </Link>
+                                <p className="text-xs text-gray-500 mt-0.5">{j?.company?.name}</p>
+                              </div>
+                              {/* Status badge */}
+                              <span className={`flex items-center gap-1 text-xs px-2.5 py-1 rounded-full font-medium flex-shrink-0 ${statusCfg.color}`}>
+                                {statusCfg.icon} {statusCfg.label}
+                              </span>
+                            </div>
+
+                            {j && (
+                              <>
+                                <div className="flex items-center gap-1 mt-1.5 text-xs text-gray-500">
+                                  <MapPin className="h-3 w-3" /><span>{j.city}</span>
+                                </div>
+                                <div className="text-xs font-medium text-gray-700 mt-0.5">
+                                  {fmtSalary(j.salaryMin)}{j.salaryMax ? ` - ${fmtSalary(j.salaryMax)}` : ''}
+                                  <span className="font-normal text-gray-400 ml-1">monthly</span>
+                                </div>
+                                <div className="flex flex-wrap gap-1.5 mt-2">
+                                  {j.workLocationType && (
+                                    <span className="text-[10px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full capitalize">
+                                      {j.workLocationType.replace(/_/g, ' ')}
+                                    </span>
+                                  )}
+                                  <span className="text-[10px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
+                                    {j.jobType?.replace(/_/g, ' ') || 'Full Time'}
+                                  </span>
+                                  <span className="text-[10px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
+                                    {j.experienceMin === 0 ? 'Freshers' : `${j.experienceMin}+ yrs`}
+                                  </span>
+                                </div>
+                              </>
+                            )}
+
+                            <div className="flex items-center justify-between mt-2.5">
+                              <span className="text-[10px] text-gray-400">
+                                Applied on {fmtDate(app.appliedAt)}
+                              </span>
+                              <Link
+                                to={`/jobs/${j?.id}`}
+                                className="text-xs text-[#1a7d4e] font-medium hover:underline"
+                              >
+                                View job →
+                              </Link>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })()
+          )}
+        </div>
+      </div>
+    </div>
+  );
+
   const infoRows = [
     { label: 'Email ID', value: user?.email },
     { label: 'Mobile Number', value: profile?.phone || 'Not added' },
@@ -281,6 +460,9 @@ export const CandidateDashboard = () => {
           </aside>
 
           {/* RIGHT CONTENT */}
+          {activeTab === 'applications' ? (
+            <ApplicationsView />
+          ) : (
           <div className="flex-1 space-y-4">
 
             {/* WORK EXPERIENCE */}
@@ -520,6 +702,7 @@ export const CandidateDashboard = () => {
               </div>
             </section>
           </div>
+          )}
         </div>
       </div>
 

@@ -399,7 +399,7 @@ export const JobsPage = () => {
                               {getJobTypeBadge(job.jobType)}
                             </span>
                             <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
-                              {job.experienceMin === 0 ? 'Freshers only' : `${job.experienceMin}+ yrs exp`}
+              {job.experienceMin == null ? 'Any experience' : job.experienceMin === 0 ? 'Freshers only' : `${job.experienceMin}+ yrs exp`}
                             </span>
                           </div>
                         </div>
