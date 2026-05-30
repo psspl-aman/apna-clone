@@ -16,7 +16,7 @@ Full-stack job portal clone of [apna.co](https://apna.co) built with React 18, N
 
 ```
 apna-clone/
-├── backend/                   # NestJS app (port 5000)
+├── backend/                   # NestJS app (port 3001)
 │   ├── src/
 │   │   ├── modules/
 │   │   │   ├── auth/          # JWT auth (register, login, refresh, logout)
@@ -88,7 +88,7 @@ npm install
 # Edit .env — set DB_PASSWORD, JWT secrets, and optionally Razorpay keys
 DB_PASSWORD=1234 npx sequelize-cli db:migrate
 DB_PASSWORD=1234 npx sequelize-cli db:seed:all
-npm run start:dev              # http://localhost:5000
+npm run start:dev              # http://localhost:3001
 ```
 
 ### 3. Frontend

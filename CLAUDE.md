@@ -110,7 +110,7 @@ Every API endpoint must return:
 
 ### Backend `.env`
 ```
-PORT=5000
+PORT=3001
 NODE_ENV=development
 DB_HOST=localhost
 DB_PORT=5432
@@ -128,7 +128,7 @@ RAZORPAY_KEY_SECRET=REPLACE_WITH_YOUR_SECRET
 
 ### Frontend `.env`
 ```
-REACT_APP_API_URL=http://localhost:5000/api
+REACT_APP_API_URL=http://localhost:3001/api
 PORT=3001
 REACT_APP_RAZORPAY_KEY_ID=rzp_test_REPLACE_WITH_YOUR_KEY
 ```

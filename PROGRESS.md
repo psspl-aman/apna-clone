@@ -353,7 +353,7 @@ Phase 14: ✅✅✅✅✅✅  100%  — Auth UX (Modal Login + Reload Fix)
 
 ## 📝 Notes & Decisions
 
-- **Ports**: Backend on 5000, Frontend on 3001 (changed from 3001/3000)
+- **Ports**: Backend on 3001, Frontend on 3001 (changed from 3001/3000)
 - **Razorpay**: Mock mode auto-activates when key contains placeholder string — no account needed for dev
 - **Employer login**: Standalone full-page route (no shared Navbar/Footer) so it can have its own dark theme
 - **Candidate login**: Modal overlay instead of page navigation — better UX, stays on current page after login
