@@ -6,9 +6,10 @@ import { Job } from './models/job.model';
 import { Company } from '../companies/models/company.model';
 import { SavedJob } from './models/saved-job.model';
 import { User } from '../users/models/user.model';
+import { Application } from '../applications/models/application.model';
 
 @Module({
-  imports: [SequelizeModule.forFeature([Job, Company, SavedJob, User])],
+  imports: [SequelizeModule.forFeature([Job, Company, SavedJob, User, Application])],
   controllers: [JobsController],
   providers: [JobsService],
   exports: [JobsService],

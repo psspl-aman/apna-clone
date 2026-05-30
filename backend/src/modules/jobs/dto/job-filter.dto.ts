@@ -1,5 +1,5 @@
-import { IsOptional, IsString, IsNumber, IsEnum, Min } from 'class-validator';
-import { Transform, Type } from 'class-transformer';
+import { IsOptional, IsString, IsNumber, Min } from 'class-validator';
+import { Type } from 'class-transformer';
 
 export class JobFilterDto {
   @IsOptional()
@@ -15,8 +15,20 @@ export class JobFilterDto {
   category?: string;
 
   @IsOptional()
-  @IsEnum(['full_time', 'part_time', 'work_from_home', 'night_shift'])
+  @IsString()
+  department?: string;
+
+  @IsOptional()
+  @IsString()
   job_type?: string;
+
+  @IsOptional()
+  @IsString()
+  work_mode?: string; // work_from_home | work_from_office | field_job
+
+  @IsOptional()
+  @IsString()
+  gender?: string; // any | male | female
 
   @IsOptional()
   @Type(() => Number)
@@ -35,8 +47,12 @@ export class JobFilterDto {
   exp_max?: number;
 
   @IsOptional()
-  @IsEnum(['24h', '3d', '7d', 'all'])
-  date_posted?: string;
+  @IsString()
+  date_posted?: string; // 24h | 3d | 7d | all
+
+  @IsOptional()
+  @IsString()
+  sort_by?: string; // relevance | recent | salary
 
   @IsOptional()
   @Type(() => Number)

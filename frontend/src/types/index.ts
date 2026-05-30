@@ -84,6 +84,7 @@ export interface Job {
   title: string;
   description: string;
   category: string;
+  department?: string;
   city: string;
   jobType: 'full_time' | 'part_time' | 'work_from_home' | 'night_shift';
   salaryMin?: number;
@@ -94,7 +95,12 @@ export interface Job {
   education?: string;
   openings: number;
   isActive: boolean;
+  workLocationType?: string;
+  payType?: string;
+  isNightShift?: boolean;
+  englishLevel?: string;
   createdAt: string;
+  applicantCount?: number;
 }
 
 export interface Application {
@@ -123,12 +129,15 @@ export interface JobFilters {
   keyword: string;
   city: string;
   category: string;
+  department: string;
   job_type: string;
+  work_mode: string;
   salary_min: number;
   exp_min: number;
   exp_max?: number;
   gender: string;
   date_posted: string;
+  sort_by: string;
   page: number;
   limit: number;
 }

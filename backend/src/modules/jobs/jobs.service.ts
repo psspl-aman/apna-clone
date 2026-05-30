@@ -1,8 +1,9 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
-import { Op, WhereOptions } from 'sequelize';
+import { Op, WhereOptions, Sequelize } from 'sequelize';
 import { Job } from './models/job.model';
 import { Company } from '../companies/models/company.model';
+import { Application } from '../applications/models/application.model';
 import { SavedJob } from './models/saved-job.model';
 import { CreateJobDto } from './dto/create-job.dto';
 import { UpdateJobDto } from './dto/update-job.dto';
@@ -13,6 +14,7 @@ export class JobsService {
   constructor(
     @InjectModel(Job) private readonly jobModel: typeof Job,
     @InjectModel(SavedJob) private readonly savedJobModel: typeof SavedJob,
+    @InjectModel(Application) private readonly applicationModel: typeof Application,
   ) {}
 
   async findAll(filters: JobFilterDto) {
@@ -25,15 +27,31 @@ export class JobsService {
       ];
     }
 
-    if (filters.city) where['city'] = filters.city;
+    if (filters.city) where['city'] = { [Op.iLike]: `%${filters.city}%` };
     if (filters.category) where['category'] = filters.category;
-    if (filters.job_type) where['job_type'] = filters.job_type;
+    if (filters.department) where['department'] = filters.department;
+
+    // Work mode maps to job_type (work_from_home) or work_location_type
+    if (filters.work_mode) {
+      if (filters.work_mode === 'work_from_home') {
+        where['job_type'] = 'work_from_home';
+      } else {
+        where['work_location_type'] = filters.work_mode;
+      }
+    } else if (filters.job_type) {
+      where['job_type'] = filters.job_type;
+    }
+
+    // Gender filter: if male/female, include 'any' jobs too
+    if (filters.gender && filters.gender !== 'any') {
+      where['gender'] = { [Op.in]: [filters.gender, 'any'] };
+    }
 
     if (filters.salary_min) {
       where['salary_max'] = { [Op.gte]: filters.salary_min };
     }
 
-    if (filters.exp_min !== undefined) {
+    if (filters.exp_min !== undefined && filters.exp_min > 0) {
       where['experience_max'] = { [Op.gte]: filters.exp_min };
     }
 
@@ -49,12 +67,18 @@ export class JobsService {
     const limit = filters.limit || 10;
     const offset = (page - 1) * limit;
 
+    let order: any[] = [['created_at', 'DESC']];
+    if (filters.sort_by === 'salary') {
+      order = [['salary_max', 'DESC']];
+    }
+
     const { count, rows } = await this.jobModel.findAndCountAll({
       where,
       include: [{ model: Company, attributes: ['id', 'name', 'logo_url', 'city'] }],
       limit,
       offset,
-      order: [['created_at', 'DESC']],
+      order,
+      distinct: true,
     });
 
     return {
@@ -73,7 +97,10 @@ export class JobsService {
       include: [{ model: Company }],
     });
     if (!job) throw new NotFoundException('Job not found');
-    return job;
+    const applicantCount = await this.applicationModel.count({ where: { job_id: id } });
+    const jobData = job.toJSON() as any;
+    jobData.applicantCount = applicantCount;
+    return jobData;
   }
 
   async create(dto: CreateJobDto, companyId: string) {

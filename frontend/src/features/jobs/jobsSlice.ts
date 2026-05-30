@@ -18,11 +18,14 @@ const initialState: JobsState = {
     keyword: '',
     city: '',
     category: '',
+    department: '',
     job_type: '',
+    work_mode: '',
     salary_min: 0,
     exp_min: 0,
     gender: '',
     date_posted: 'all',
+    sort_by: 'relevance',
     page: 1,
     limit: 10,
   },
@@ -58,7 +61,8 @@ const jobsSlice = createSlice({
   initialState,
   reducers: {
     setFilter: (state, action: PayloadAction<Partial<JobFilters>>) => {
-      state.filters = { ...state.filters, ...action.payload, page: 1 };
+      const resetPage = !('page' in action.payload);
+      state.filters = { ...state.filters, ...action.payload, ...(resetPage ? { page: 1 } : {}) };
     },
     setPage: (state, action: PayloadAction<number>) => {
       state.filters.page = action.payload;
