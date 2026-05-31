@@ -84,6 +84,9 @@ apna-clone/
 | 12 | Polish, Testing & Deployment | ✅ Complete |
 | 13 | UI Overhaul — Employer Flow + Payments | ✅ Complete |
 | 14 | Auth UX — Modal Login + Reload Fix | ✅ Complete |
+| 15 | Job Payment Flow & Employer Dashboard Enhancement | ✅ Complete |
+| 16 | UI/UX Polish — Jobs Listing, Browse, Footer, Navbar | ✅ Complete |
+| 17 | Resume Tool (Career Compass) | ✅ Complete |
 
 ---
 
@@ -177,6 +180,106 @@ REACT_APP_RAZORPAY_KEY_ID=rzp_test_REPLACE_WITH_YOUR_KEY
 ### EmployerLoginPage Reload Fix
 - Added `useEffect` to redirect already-authenticated employers to `/employer/dashboard`
 - Shows spinner during auth re-hydration instead of login form
+
+---
+
+## Phase 15 — Job Payment Flow & Employer Dashboard Enhancement
+
+### Payment Model
+- `modules/payments/models/payment.model.ts` — `Payment` Sequelize model tracking plan, amounts, Razorpay IDs, status, validity dates
+- Migration `20260531000000-create-payments` — `payments` table
+
+### Payment Endpoints
+- `POST /api/payments/create-order` — now accepts optional `jobId`; records pending `Payment` row
+- `POST /api/payments/publish-job` — verifies signature, marks payment success, updates or creates job
+- `GET /api/payments/history` — returns all company payments (billing tab)
+
+### PostJobWizard Changes
+- Saves job draft (`is_paid: false, is_active: false`) when advancing from step 2 → 3
+- Stores `jobId` in local state and passes to payment calls
+- Accepts `location.state.initialStep`, `location.state.prefill`, `location.state.isPaid` for edit/finish-posting modes
+
+### EmployerDashboard Changes
+- Job cards: `Select Plan` badge for unpaid, `Active`/`Inactive` for paid
+- `Finish posting` button on unpaid jobs → opens wizard at preview step
+- Three-dot menu: Edit / Duplicate / Delete / Activate-Deactivate
+- Billing tab: payment history table with filter chips (All/Success/Pending/Failed) and Retry button
+- **All job fields now use camelCase** (`job.isPaid`, `job.isActive`) — required after Axios interceptor
+
+### Global camelCase Conversion
+- `services/api.ts` response interceptor: `response.data = toCamelCase(response.data)`
+- `utils/caseTransform.ts` — recursive `toCamelCase` and `toSnakeCase` utilities
+- ALL frontend code must use camelCase keys for API responses
+
+---
+
+## Phase 16 — UI/UX Polish (Jobs Listing, Browse, Footer, Navbar)
+
+### New Page: Browse Jobs (`/jobs/browse`)
+- `pages/BrowseJobs.tsx` — three sections (74 cities, 130+ companies, 52 departments)
+- Live search bar filters all sections simultaneously
+- Each item click dispatches Redux filter + navigates to `/jobs`
+- Route registered before `/jobs/:id` to avoid dynamic-segment conflict
+
+### Jobs Listing Page (`Jobs.tsx`)
+- Pixel-perfect overhaul: apna green (#14a97c), salary in Indian locale, experience badges, work-mode/English badges
+- Collapsible filter sidebar with active chip display
+
+### Footer (`Footer.tsx`)
+- Filter links now dispatch Redux `setFilter` AND navigate — works from any page
+- Proper city slugs (`agra` not `Agra`) and department category slugs
+- "View more" navigates to `/jobs/browse?section=city` or `department`
+- Self-hides on `/jobs/browse`, `/career-compass/new`, `/career-compass/edit/*` via `useLocation`
+
+### Navbar (`Navbar.tsx`)
+- Jobs dropdown hover gap fix: `mt-2` → `pt-2` on `JobsDropdown` container
+- "Resume Tool ▾" dropdown replaces simple "Resume Tool" link
+  - Resumes → `/career-compass`
+  - Cover Letters → `/career-compass?tab=cover-letters`
+  - Click-outside close via `useRef` + `useEffect`
+
+---
+
+## Phase 17 — Resume Tool (Career Compass)
+
+### New Pages
+- `pages/CareerCompass.tsx` — dashboard at `/career-compass`; exports shared types and components
+- `pages/ResumeBuilder.tsx` — full-screen accordion editor at `/career-compass/new` and `/career-compass/edit/:id`
+
+### Shared Exports from `CareerCompass.tsx`
+- `ResumeData`, `ResumePersonal`, `ResumeExpItem`, `ResumeEduItem`, `ResumeLanguage` — TypeScript interfaces
+- `getStoredResumes()` / `saveStoredResumes()` — localStorage helpers (key: `apna_career_resumes`) with migration support
+- `ResumeDocument` — renders full A4 resume (794px wide; used by both preview and builder)
+- `ResumePreviewCard` — CSS `scale(0.32)` clipped thumbnail for dashboard cards
+
+### CareerCompass Dashboard
+- Resumes tab: grid of cards ("New Resume" + existing), mini preview, three-dot menu (Edit/Rename/Delete)
+- Rename inline: click Rename → input replaces label, saves on blur/Enter
+- Cover Letters tab: placeholder (coming soon)
+
+### ResumeBuilder (Accordion Form + Live Preview)
+- Left 480px: scrollable accordion sections
+  - **Personal Info**: name, photo upload (UI only), email, mobile, city, experience level (Fresher/Experience radio), preferred title, professional summary (contenteditable rich text)
+  - **Work Experience**: add/remove items; role, company, start/end month, currently-working checkbox, description
+  - **Education**: add/remove items; degree, institution, field of study, start/end year
+  - **Skills**: tag input (Enter or click Add), remove chips
+  - **Languages**: name + level dropdown, add/remove
+  - **Add Other Sections**: 7 optional card buttons (Internship, Projects, Certifications, Awards, Hobbies, Publications, Social Links)
+- Right panel: `ResumeDocument` at `zoom: 0.6`; updates live as user types
+- Top bar: ← back, editable resume name, Resume analysis (toast), Templates (toast), Download (print)
+
+### "Use Profile" Prefill
+- Calls `GET /candidates/profile`
+- Response shape: `{ data: { profile: {...}, workExperiences: [...], educations: [...] } }`
+- Reads work experiences from `d.workExperiences` (top-level) with fallback to `d.profile.workExperiences`
+- Auto-generates summary from: `preferredJobTitles[0] + totalExperience + education + top-4-skills + city`
+- Opens relevant sections after fill
+
+### Routing
+- `/career-compass` — inside Navbar layout (has Navbar, no Footer)
+- `/career-compass/new` — inside Navbar layout (has Navbar, Footer hidden via `useLocation`)
+- `/career-compass/edit/:id` — same as above
+- Builder height: `h-[calc(100vh-4rem)]` (subtracts 64px navbar)
 
 ---
 

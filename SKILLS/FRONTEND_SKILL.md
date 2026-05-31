@@ -1,8 +1,8 @@
 # FRONTEND_SKILL.md — React + TypeScript + Redux Toolkit + Tailwind
 
-> Read this before starting Phase 5, 6, 7, 8, 9, 10, 11, 13, or 14.
+> Read this before starting Phase 5, 6, 7, 8, 9, 10, 11, 13, 14, 15, 16, or 17.
 
-**Last updated: 2026-05-29 (Phase 14)**
+**Last updated: 2026-05-31 (Phase 17)**
 
 ---
 
@@ -399,7 +399,7 @@ export const ProtectedRoute = ({ children, requiredRole }: Props) => {
 
 ---
 
-## 8. Router Setup (Phase 13 updated — standalone employer routes)
+## 8. Router Setup (Phase 17 updated — all routes)
 
 ```tsx
 // src/App.tsx
@@ -426,7 +426,11 @@ function App() {
               <Routes>
                 <Route path="/" element={<HomePage />} />
                 <Route path="/jobs" element={<JobsPage />} />
+                <Route path="/jobs/browse" element={<BrowseJobsPage />} />{/* BEFORE /jobs/:id */}
                 <Route path="/jobs/:id" element={<JobDetailPage />} />
+                <Route path="/career-compass" element={<CareerCompassPage />} />
+                <Route path="/career-compass/new" element={<ResumeBuilderPage />} />
+                <Route path="/career-compass/edit/:id" element={<ResumeBuilderPage />} />
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/register" element={<RegisterPage />} />
                 <Route path="/profile"
@@ -434,13 +438,16 @@ function App() {
                 <Route path="*" element={<NotFoundPage />} />
               </Routes>
             </main>
-            <Footer />
+            <Footer />{/* Footer self-hides on /jobs/browse, /career-compass/new, /career-compass/edit/* */}
           </div>
         } />
       </Routes>
     </BrowserRouter>
   );
 }
+// NOTE: Footer uses useLocation() to hide itself on browse/builder pages:
+// if (path === '/jobs/browse' || path === '/career-compass/new' || path.startsWith('/career-compass/edit/'))
+//   return null;
 ```
 
 ---
@@ -594,7 +601,122 @@ export const CandidateAuthModal = ({ isOpen, defaultTab = 'login', onClose }: Pr
 
 ---
 
-## 13. Razorpay Frontend Integration (Phase 13)
+## 13. Global camelCase Interceptor (Phase 15)
+
+All backend responses use snake_case column names. The Axios interceptor converts them automatically:
+
+```typescript
+// services/api.ts
+import { toCamelCase } from '../utils/caseTransform';
+
+api.interceptors.response.use(
+  (response) => {
+    if (response.data) response.data = toCamelCase(response.data);
+    return response;
+  },
+  // ... error handler
+);
+```
+
+**CRITICAL**: After this interceptor, ALL API response fields are camelCase in the frontend:
+- `job.is_paid` → `job.isPaid`
+- `job.is_active` → `job.isActive`
+- `payment.total_amount` → `payment.totalAmount`
+- `payment.plan_start_at` → `payment.planStartAt`
+
+When sending data TO the backend, use snake_case (backend expects it):
+```typescript
+await api.put(`/jobs/${id}`, { is_active: true });  // snake_case payload ✓
+const active = job.isActive;                          // camelCase read ✓
+```
+
+---
+
+## 14. Navbar Hover Dropdown Gap Fix (Phase 16)
+
+Dropdowns triggered by `onMouseEnter`/`onMouseLeave` close prematurely if the dropdown has a margin between the trigger and panel (the mouse crosses empty space and fires `onMouseLeave`).
+
+**Fix**: Replace `mt-2` (margin = outside the element's hit area) with `pt-2` (padding = inside hit area):
+
+```tsx
+// WRONG — mt-2 creates a physical gap outside the element
+<div className="absolute top-full left-0 mt-2 z-50">
+
+// CORRECT — pt-2 creates visual gap inside the element (still receives mouse events)
+<div className="absolute top-full left-0 pt-2 z-50">
+```
+
+---
+
+## 15. Resume Builder — localStorage Pattern (Phase 17)
+
+Resumes are stored entirely in `localStorage` with no backend:
+
+```typescript
+// utils/resumeStorage (exported from CareerCompass.tsx)
+const STORAGE_KEY = 'apna_career_resumes';
+
+export const getStoredResumes = (): ResumeData[] => {
+  try {
+    const raw: any[] = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+    // Migrate older records — add defaults for new fields
+    return raw.map(r => ({ languages: [], ...r, personal: { city: '', ...r.personal } }));
+  } catch { return []; }
+};
+
+export const saveStoredResumes = (list: ResumeData[]): void => {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+};
+```
+
+**Resume mini-preview** (card thumbnail using CSS transform):
+```tsx
+// Scale down a 794px-wide resume to fit in a ~254px card
+export const ResumePreviewCard = ({ data }: { data: ResumeData }) => (
+  <div className="overflow-hidden w-full bg-white" style={{ height: '250px' }}>
+    <div style={{ transform: 'scale(0.32)', transformOrigin: 'top left', width: '794px' }}>
+      <ResumeDocument data={data} />
+    </div>
+  </div>
+);
+```
+
+**Rich-text summary** using `contenteditable` + `execCommand`:
+```tsx
+const summaryRef = useRef<HTMLDivElement>(null);
+
+// Sync from outside (e.g., "Use Profile" prefill)
+useEffect(() => {
+  if (summaryRef.current && document.activeElement !== summaryRef.current) {
+    summaryRef.current.innerHTML = resume.summary || '';
+  }
+}, [resume.summary]);
+
+// Toolbar button (use onMouseDown + preventDefault to keep editor focused)
+<button onMouseDown={e => { e.preventDefault(); document.execCommand('bold', false, undefined); }}>
+  B
+</button>
+
+// Editable area
+<div
+  ref={summaryRef}
+  contentEditable
+  suppressContentEditableWarning
+  onInput={() => {
+    if (summaryRef.current)
+      setResume(prev => ({ ...prev, summary: summaryRef.current!.innerHTML }));
+  }}
+/>
+```
+
+**Builder height** (below a 64px Navbar):
+```tsx
+<div className="flex flex-col h-[calc(100vh-4rem)] overflow-hidden">
+```
+
+---
+
+## 16. Razorpay Frontend Integration (Phase 13)
 
 ```tsx
 // Load Razorpay script dynamically

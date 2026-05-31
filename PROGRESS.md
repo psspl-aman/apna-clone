@@ -23,6 +23,9 @@ Phase 11: ✅✅✅✅✅✅  100%  — Employer Dashboard
 Phase 12: ✅✅✅✅✅✅  100%  — Polish & Deployment
 Phase 13: ✅✅✅✅✅✅  100%  — UI Overhaul (Employer Flow + Payments)
 Phase 14: ✅✅✅✅✅✅  100%  — Auth UX (Modal Login + Reload Fix)
+Phase 15: ✅✅✅✅✅✅  100%  — Job Payment Flow & Employer Dashboard Enhancement
+Phase 16: ✅✅✅✅✅✅  100%  — UI/UX Polish (Jobs Listing, Browse, Footer, Navbar)
+Phase 17: ✅✅✅✅✅✅  100%  — Resume Tool (Career Compass)
 ```
 
 ---
@@ -333,6 +336,78 @@ Phase 14: ✅✅✅✅✅✅  100%  — Auth UX (Modal Login + Reload Fix)
 
 ---
 
+---
+
+## Phase 15 — Job Payment Flow & Employer Dashboard Enhancement
+
+| Step | Task | Status | Notes |
+|------|------|--------|-------|
+| 15.1 | Employer login page: add signup/register tab alongside login | ✅ | Full yup validation, `registerEmployer` thunk |
+| 15.2 | Backend: `Payment` Sequelize model + migration `20260531000000-create-payments` | ✅ | Tracks plan, amounts, Razorpay IDs, status, validity dates |
+| 15.3 | `PaymentsService`: `createOrder` records pending payment; `verifyAndPublishJob` updates draft job | ✅ | Signature verification; mock mode for dev |
+| 15.4 | `PaymentsController`: `GET /payments/history` endpoint for billing tab | ✅ | Returns all company payments ordered by date |
+| 15.5 | `PostJobWizard`: save draft on step 2→3 advance (`POST /jobs` with `is_paid: false`) | ✅ | Stores `jobId`; accepts `location.state` for edit/finish-posting modes |
+| 15.6 | `PostJobWizard`: pass `jobId` to payment `create-order` and `publish-job` calls | ✅ | Backend links payment record to existing draft |
+| 15.7 | `EmployerDashboard` job cards: `Select Plan` badge, `Finish posting` button for unpaid jobs | ✅ | Separate badge per payment status |
+| 15.8 | `EmployerDashboard` three-dot menu: Edit / Duplicate / Delete / Activate-Deactivate | ✅ | Activation only for paid jobs |
+| 15.9 | `EmployerDashboard` Billing tab: full payment history table with filter chips | ✅ | Date, plan, applies-until, amount, status badge, retry button |
+| 15.10 | Fix camelCase fields in dashboard: `isPaid`, `isActive` instead of `is_paid`, `is_active` | ✅ | Axios interceptor converts all API responses to camelCase |
+| 15.11 | Axios `toCamelCase` interceptor in `api.ts` — global snake_case → camelCase for all responses | ✅ | Recursive via `utils/caseTransform.ts` |
+| 15.12 | Update `Job` TypeScript interface to use camelCase properties throughout | ✅ | `salaryMin`, `jobType`, `isPaid`, `isActive`, etc. |
+| 15.13 | `PostJobWizard` prefill: support both camelCase (interceptor) and snake_case (safety) keys | ✅ | `p.salaryMin ?? p.salary_min ?? 0` pattern |
+
+**Phase 15 Complete?** ✅ YES
+
+---
+
+## Phase 16 — UI/UX Polish (Jobs Listing, Browse, Footer, Navbar)
+
+| Step | Task | Status | Notes |
+|------|------|--------|-------|
+| 16.1 | Jobs listing page pixel-perfect overhaul (apna green, badges, salary formatting, filters) | ✅ | Indian locale salary, experience label, badge icons |
+| 16.2 | Skills input fix in PostJobWizard: `+ Add` button, Enter key, remove chip, camelCase prefill | ✅ | |
+| 16.3 | Navbar Jobs dropdown hover gap fix: `mt-2` → `pt-2` on dropdown container | ✅ | Prevents premature close when crossing gap |
+| 16.4 | `BrowseJobsPage` at `/jobs/browse`: Jobs By City / Company / Department grid + search | ✅ | 74 cities, 130+ companies, 52 departments; click dispatches Redux filter |
+| 16.5 | Register `/jobs/browse` route before `/jobs/:id` to prevent dynamic-segment conflict | ✅ | |
+| 16.6 | Update Jobs dropdown "View All" links to point to `/jobs/browse?section=...` | ✅ | Section param triggers smooth-scroll to section |
+| 16.7 | Footer: make filter links functional (dispatch Redux + navigate with proper slugs) | ✅ | City slugs fixed, department slugs fixed, popular job filters wired |
+| 16.8 | Footer: "View more" buttons navigate to `/jobs/browse?section=...` | ✅ | |
+| 16.9 | Footer: hide on `/jobs/browse`, `/career-compass/new`, `/career-compass/edit/*` | ✅ | `useLocation` check; browse page IS the footer browse section |
+| 16.10 | Navbar: replace "Resume Tool" simple link with "Resume Tool ▾" dropdown | ✅ | Dropdown: Resumes → `/career-compass`, Cover Letters |
+| 16.11 | Navbar dropdown: click-outside close via `useRef`, closes when Jobs opens | ✅ | |
+
+**Phase 16 Complete?** ✅ YES
+
+---
+
+## Phase 17 — Resume Tool (Career Compass)
+
+| Step | Task | Status | Notes |
+|------|------|--------|-------|
+| 17.1 | `CareerCompassPage` at `/career-compass`: resume card grid dashboard | ✅ | "+ Create new" dropdown, Resumes/Cover Letters tabs |
+| 17.2 | Resume cards: scaled-down live preview using CSS `scale(0.32)` + `overflow: hidden` | ✅ | Identical to final printed resume; clickable to edit |
+| 17.3 | Three-dot menu on resume cards: Edit / Rename (inline) / Delete | ✅ | Rename uses `input` on blur, saves to localStorage |
+| 17.4 | `ResumeData` types + `ResumeLanguage` type in `CareerCompass.tsx` (exported) | ✅ | Includes `city`, `experienceLevel`, `preferredTitle`, `languages` |
+| 17.5 | `getStoredResumes` / `saveStoredResumes` localStorage helpers with migration support | ✅ | Adds defaults for new fields on older stored records |
+| 17.6 | `ResumeDocument` component: shared by card preview and full builder preview | ✅ | Header, Summary, Experience, Education, Skills, Languages sections |
+| 17.7 | `ResumeBuilderPage` at `/career-compass/new` + `/career-compass/edit/:id` | ✅ | Accordion form + right live preview panel |
+| 17.8 | Builder accordion sections: Personal Info, Work Experience, Education, Skills, Languages | ✅ | Toggle open/close per section |
+| 17.9 | Personal Info: Full Name, Upload photo placeholder, Email, Mobile, City, Experience Level (radio), Preferred Title, Professional Summary (rich text) | ✅ | |
+| 17.10 | Professional Summary: `contenteditable` div with B/I/≡/≣/U toolbar (`execCommand`) | ✅ | Syncs to `resume.summary` on input; `useEffect` syncs on external change |
+| 17.11 | Work Experience / Education / Skills / Languages: add, edit, remove | ✅ | |
+| 17.12 | "Add Other Sections" grid: Internship, Projects, Certs, Awards, Hobbies, Publications, Social Links | ✅ | Click adds section to accordion above grid; X removes it |
+| 17.13 | "Use Profile" button: calls `GET /candidates/profile`, maps nested response to resume fields | ✅ | Reads from both `d.workExperiences` and `d.profile.workExperiences` fallback |
+| 17.14 | Summary auto-generation from profile: title + experience + education + skills + city | ✅ | Only fills if summary currently empty |
+| 17.15 | Live preview: `zoom: 0.6` on `ResumeDocument`; updates as you type | ✅ | Uses `resume.summary` state directly (not ref) |
+| 17.16 | Download button: injects `@media print` CSS to isolate resume, calls `window.print()` | ✅ | Print-target div shown; rest hidden |
+| 17.17 | Save: writes to localStorage; navigates to `/career-compass` | ✅ | Validates fullName before saving |
+| 17.18 | Builder routes moved inside Navbar layout; footer hidden on builder pages | ✅ | `h-[calc(100vh-4rem)]` to account for 64px navbar |
+| 17.19 | Navbar label changed from "Career Compass" to "Resume Tool" | ✅ | Both desktop and mobile menu |
+
+**Phase 17 Complete?** ✅ YES
+
+---
+
 ## 🐛 Issues / Blockers Log
 
 | Date | Issue | Status | Resolution |
@@ -365,3 +440,8 @@ Phase 14: ✅✅✅✅✅✅  100%  — Auth UX (Modal Login + Reload Fix)
 - **Candidate login**: Modal overlay instead of page navigation — better UX, stays on current page after login
 - **ProtectedRoute reload fix**: Must check `loading` state before making role-based redirect decisions
 - **Migration password**: Run as `DB_PASSWORD=1234 npx sequelize-cli db:migrate` since .env not auto-loaded by CLI
+- **camelCase API responses**: Axios interceptor in `api.ts` converts ALL snake_case keys to camelCase globally via `toCamelCase()`. All frontend code must use camelCase field names (e.g. `job.isPaid`, not `job.is_paid`).
+- **Resume storage**: Resumes are stored in browser `localStorage` (key: `apna_career_resumes`). No backend API needed. Each resume is a `ResumeData` JSON object.
+- **Resume preview**: Uses CSS `zoom: 0.6` for the builder right-panel and `transform: scale(0.32)` for the card mini-preview. Both render the same `ResumeDocument` component.
+- **Navbar dropdown hover**: Use `pt-2` (padding, inside hit-area) instead of `mt-2` (margin, outside hit-area) on dropdown containers to prevent `onMouseLeave` firing while crossing the visual gap.
+- **Profile API shape**: `GET /candidates/profile` returns `{ data: { profile: {...}, workExperiences: [...], educations: [...], certifications: [...], profileCompletion: N } }`. Work experiences are also nested inside `profile.workExperiences`; always check both locations.

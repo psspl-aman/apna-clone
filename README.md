@@ -30,7 +30,7 @@ apna-clone/
 │   │   ├── common/            # Guards, decorators, filters
 │   │   ├── config/            # Database, JWT config
 │   │   └── main.ts
-│   ├── migrations/            # 9 Sequelize migrations
+│   ├── migrations/            # 15 Sequelize migrations
 │   ├── seeders/               # 40 categories, 30 cities, 50 sample jobs
 │   └── .env
 ├── frontend/                  # React app (port 3001)
@@ -38,20 +38,24 @@ apna-clone/
 │   │   ├── app/               # Redux store
 │   │   ├── features/          # authSlice, jobsSlice, applicationsSlice, candidateSlice, uiSlice
 │   │   ├── pages/
-│   │   │   ├── Home.tsx           # Landing page
-│   │   │   ├── Jobs.tsx           # Job listing + filters
-│   │   │   ├── JobDetail.tsx      # Job detail + apply
-│   │   │   ├── CandidateDashboard.tsx  # Candidate profile management
-│   │   │   ├── EmployerLogin.tsx  # Standalone employer login (apna-style)
-│   │   │   ├── EmployerDashboard.tsx   # apnaHire dashboard (collapsible sidebar)
-│   │   │   └── PostJobWizard.tsx  # 5-step job posting + Razorpay payment
+│   │   │   ├── Home.tsx               # Landing page
+│   │   │   ├── Jobs.tsx               # Job listing + pixel-perfect filters
+│   │   │   ├── BrowseJobs.tsx         # Browse by city / company / department
+│   │   │   ├── JobDetail.tsx          # Job detail + apply
+│   │   │   ├── CandidateDashboard.tsx # Candidate profile management
+│   │   │   ├── EmployerLogin.tsx      # Standalone employer login + signup
+│   │   │   ├── EmployerDashboard.tsx  # apnaHire dashboard + billing tab
+│   │   │   ├── PostJobWizard.tsx      # 5-step job posting + Razorpay
+│   │   │   ├── CareerCompass.tsx      # Resume Tool dashboard (shared types + preview)
+│   │   │   └── ResumeBuilder.tsx      # Accordion resume editor + live preview
 │   │   ├── components/
-│   │   │   ├── Navbar/            # Main site navbar with CandidateAuthModal
+│   │   │   ├── Navbar/            # Navbar: Jobs dropdown, Resume Tool dropdown
 │   │   │   ├── CandidateAuthModal.tsx  # Login/Register modal (no page nav)
 │   │   │   ├── ProtectedRoute.tsx # Role-aware guard with loading state
 │   │   │   └── Modal/             # Generic modal component
-│   │   ├── services/          # Axios API layer with JWT interceptors
-│   │   └── types/             # TypeScript interfaces
+│   │   ├── services/          # Axios API layer (JWT + camelCase interceptor)
+│   │   ├── types/             # TypeScript interfaces (all camelCase)
+│   │   └── utils/             # caseTransform.ts (toCamelCase / toSnakeCase)
 │   └── .env
 ├── docker-compose.yml         # PostgreSQL 15 + Redis 7
 ├── CLAUDE.md                  # Master rules + change log
@@ -150,8 +154,9 @@ npm start                      # http://localhost:3001
 | Method | Endpoint | Auth | Description |
 |--------|----------|------|-------------|
 | GET | /api/payments/plans | - | Get plan prices |
-| POST | /api/payments/create-order | JWT (employer) | Create Razorpay order |
-| POST | /api/payments/publish-job | JWT (employer) | Verify payment + publish job |
+| POST | /api/payments/create-order | JWT (employer) | Create Razorpay order (accepts optional `jobId`) |
+| POST | /api/payments/publish-job | JWT (employer) | Verify payment + publish/update job |
+| GET | /api/payments/history | JWT (employer) | Payment history for billing tab |
 
 ## API Response Format
 
@@ -216,16 +221,52 @@ After running migrations and seeders:
 
 | URL | Description |
 |-----|-------------|
-| `/employer/login` | Standalone dark-themed login (apna.co design) |
-| `/employer/dashboard` | apnaHire dashboard — collapsible sidebar, jobs list, avatar dropdown |
+| `/employer/login` | Standalone dark-themed login + signup (apna.co design) |
+| `/employer/dashboard` | apnaHire dashboard — jobs list, billing tab, company profile |
 | `/employer/post-job` | 5-step job posting wizard with Razorpay payment |
 
 ### 5-Step Job Posting Wizard
 1. **Job Details** — title, job type pills, work location, salary, 18 perks
 2. **Candidate Requirements** — education, English level, experience, skills, description
-3. **Interviewer Info** — walk-in interview, communication preference
+3. **Interviewer Info** — walk-in interview, communication preference *(draft saved here)*
 4. **Job Preview** — summary with edit links back to each step
 5. **Publish + Payment** — Classic (₹699) / Premium (₹1399) / Super Premium (₹2799) plans
+
+### Job Draft Flow
+- Draft saved at step 3 → 4 with `is_paid: false, is_active: false`
+- Unpaid jobs show **Select Plan** badge + **Finish posting** button in dashboard
+- Three-dot menu: Edit / Duplicate / Delete / Activate-Deactivate
+
+### Billing Tab
+- Payment history with filter chips (All / Success / Pending / Failed)
+- **Retry payment** button navigates to finish-posting wizard
+
+---
+
+## Resume Tool
+
+| URL | Description |
+|-----|-------------|
+| `/career-compass` | Resume dashboard with card grid and mini previews |
+| `/career-compass/new` | Accordion resume builder with live preview |
+| `/career-compass/edit/:id` | Edit saved resume |
+
+- **Accordion form**: Personal Info, Work Experience, Education, Skills, Languages, + 7 optional sections
+- **Use Profile**: pre-fills all fields from candidate profile API + auto-generates summary
+- **Live preview**: right panel at 60% zoom, updates as you type
+- **Download**: `window.print()` with isolated print CSS
+- **Storage**: `localStorage` (`apna_career_resumes`), no backend needed
+
+---
+
+## Browse Jobs
+
+| URL | Description |
+|-----|-------------|
+| `/jobs/browse` | Browse by city (74), company (130+), or department (52) |
+
+- Live search filters all three sections simultaneously
+- Items dispatch Redux filter + navigate to `/jobs`
 
 ---
 
@@ -259,4 +300,6 @@ Migrations (in order):
 10. `create-work-experiences`
 11. `create-educations`
 12. `create-certifications`
-13. `add-advanced-job-fields` ← new in Phase 13 (perks, pay_type, Razorpay fields, etc.)
+13. `add-advanced-job-fields` ← Phase 13 (perks, pay_type, Razorpay fields, etc.)
+14. `add-skills-to-jobs` ← Phase 15 (skills[] column on jobs)
+15. `create-payments` ← Phase 15 (payments table for billing history)
