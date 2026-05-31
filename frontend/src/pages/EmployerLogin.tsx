@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import { useAppDispatch, useAppSelector } from '../app/hooks';
-import { loginUser } from '../features/auth/authSlice';
+import { loginUser, registerEmployer } from '../features/auth/authSlice';
 import toast from 'react-hot-toast';
 import { Play, ChevronDown, ExternalLink } from 'lucide-react';
 
@@ -13,7 +13,20 @@ const loginSchema = yup.object({
   password: yup.string().min(6, 'Min 6 characters').required('Password is required'),
 });
 
+const signupSchema = yup.object({
+  companyName: yup.string().required('Company name is required'),
+  email: yup.string().email('Valid email required').required('Email is required'),
+  password: yup.string().min(6, 'Min 6 characters').required('Password is required'),
+  city: yup.string().optional(),
+});
+
 type LoginForm = yup.InferType<typeof loginSchema>;
+type SignupForm = {
+  companyName: string;
+  email: string;
+  password: string;
+  city?: string;
+};
 
 export const EmployerLoginPage = () => {
   const dispatch = useAppDispatch();
@@ -21,6 +34,7 @@ export const EmployerLoginPage = () => {
   const location = useLocation();
   const { loading, isAuthenticated, user } = useAppSelector((s) => s.auth);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mode, setMode] = useState<'login' | 'signup'>('login');
 
   const from = (location.state as any)?.from?.pathname || '/employer/dashboard';
 
@@ -41,6 +55,13 @@ export const EmployerLoginPage = () => {
     formState: { errors },
   } = useForm<LoginForm>({ resolver: yupResolver(loginSchema) });
 
+  const {
+    register: registerField,
+    handleSubmit: handleSignupSubmit,
+    formState: { errors: signupErrors },
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } = useForm<SignupForm>({ resolver: yupResolver(signupSchema) as any });
+
   // Still re-hydrating auth state — show spinner instead of login form
   if (isAuthenticated && !user && loading) {
     return (
@@ -59,6 +80,16 @@ export const EmployerLoginPage = () => {
         return;
       }
       toast.success('Login successful!');
+      navigate('/employer/dashboard', { replace: true });
+    } else {
+      toast.error(result.payload as string);
+    }
+  };
+
+  const onSignupSubmit = async (data: SignupForm) => {
+    const result = await dispatch(registerEmployer(data));
+    if (registerEmployer.fulfilled.match(result)) {
+      toast.success('Account created successfully! Welcome to apna.');
       navigate('/employer/dashboard', { replace: true });
     } else {
       toast.error(result.payload as string);
@@ -165,61 +196,167 @@ export const EmployerLoginPage = () => {
             </div>
           </div>
 
-          {/* Right: Login Card */}
+          {/* Right: Login / Signup Card */}
           <div className="w-full lg:w-[420px] flex-shrink-0">
             <div
               className="rounded-2xl p-8 shadow-2xl"
               style={{ backgroundColor: '#2d1245' }}
             >
               <h2 className="text-2xl font-bold text-white mb-1">Let's get started</h2>
-              <p className="text-gray-400 text-sm mb-7">Hire top talent faster with apna</p>
+              <p className="text-gray-400 text-sm mb-5">Hire top talent faster with apna</p>
 
-              <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-                {/* Email */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1.5">
-                    Email address
-                  </label>
-                  <input
-                    type="email"
-                    {...register('email')}
-                    placeholder="Enter your email address"
-                    className={`w-full px-4 py-3.5 rounded-lg text-sm bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1a7d4e] border-0 ${
-                      errors.email ? 'ring-2 ring-red-500' : ''
-                    }`}
-                  />
-                  {errors.email && (
-                    <p className="text-red-400 text-xs mt-1">{String(errors.email.message)}</p>
-                  )}
-                </div>
-
-                {/* Password */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1.5">
-                    Password
-                  </label>
-                  <input
-                    type="password"
-                    {...register('password')}
-                    placeholder="Enter your password"
-                    className={`w-full px-4 py-3.5 rounded-lg text-sm bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1a7d4e] border-0 ${
-                      errors.password ? 'ring-2 ring-red-500' : ''
-                    }`}
-                  />
-                  {errors.password && (
-                    <p className="text-red-400 text-xs mt-1">{String(errors.password.message)}</p>
-                  )}
-                </div>
-
+              {/* Tab Toggle */}
+              <div className="flex rounded-lg overflow-hidden border border-gray-600 mb-6">
                 <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full py-3.5 text-white font-semibold rounded-lg transition-opacity disabled:opacity-60 text-sm mt-2"
-                  style={{ backgroundColor: '#1a7d4e' }}
+                  type="button"
+                  onClick={() => setMode('login')}
+                  className={`flex-1 py-2.5 text-sm font-semibold transition-colors ${
+                    mode === 'login'
+                      ? 'text-white'
+                      : 'text-gray-400 hover:text-gray-200'
+                  }`}
+                  style={mode === 'login' ? { backgroundColor: '#1a7d4e' } : {}}
                 >
-                  {loading ? 'Signing in...' : 'Continue'}
+                  Login
                 </button>
-              </form>
+                <button
+                  type="button"
+                  onClick={() => setMode('signup')}
+                  className={`flex-1 py-2.5 text-sm font-semibold transition-colors ${
+                    mode === 'signup'
+                      ? 'text-white'
+                      : 'text-gray-400 hover:text-gray-200'
+                  }`}
+                  style={mode === 'signup' ? { backgroundColor: '#1a7d4e' } : {}}
+                >
+                  Sign Up
+                </button>
+              </div>
+
+              {/* ── Login Form ── */}
+              {mode === 'login' && (
+                <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-1.5">
+                      Email address
+                    </label>
+                    <input
+                      type="email"
+                      {...register('email')}
+                      placeholder="Enter your email address"
+                      className={`w-full px-4 py-3.5 rounded-lg text-sm bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1a7d4e] border-0 ${
+                        errors.email ? 'ring-2 ring-red-500' : ''
+                      }`}
+                    />
+                    {errors.email && (
+                      <p className="text-red-400 text-xs mt-1">{String(errors.email.message)}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-1.5">
+                      Password
+                    </label>
+                    <input
+                      type="password"
+                      {...register('password')}
+                      placeholder="Enter your password"
+                      className={`w-full px-4 py-3.5 rounded-lg text-sm bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1a7d4e] border-0 ${
+                        errors.password ? 'ring-2 ring-red-500' : ''
+                      }`}
+                    />
+                    {errors.password && (
+                      <p className="text-red-400 text-xs mt-1">{String(errors.password.message)}</p>
+                    )}
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full py-3.5 text-white font-semibold rounded-lg transition-opacity disabled:opacity-60 text-sm mt-2"
+                    style={{ backgroundColor: '#1a7d4e' }}
+                  >
+                    {loading ? 'Signing in...' : 'Continue'}
+                  </button>
+                </form>
+              )}
+
+              {/* ── Signup Form ── */}
+              {mode === 'signup' && (
+                <form onSubmit={handleSignupSubmit(onSignupSubmit)} className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-1.5">
+                      Company name
+                    </label>
+                    <input
+                      type="text"
+                      {...registerField('companyName')}
+                      placeholder="Enter your company name"
+                      className={`w-full px-4 py-3.5 rounded-lg text-sm bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1a7d4e] border-0 ${
+                        signupErrors.companyName ? 'ring-2 ring-red-500' : ''
+                      }`}
+                    />
+                    {signupErrors.companyName && (
+                      <p className="text-red-400 text-xs mt-1">{String(signupErrors.companyName.message)}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-1.5">
+                      Work email address
+                    </label>
+                    <input
+                      type="email"
+                      {...registerField('email')}
+                      placeholder="Enter your work email"
+                      className={`w-full px-4 py-3.5 rounded-lg text-sm bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1a7d4e] border-0 ${
+                        signupErrors.email ? 'ring-2 ring-red-500' : ''
+                      }`}
+                    />
+                    {signupErrors.email && (
+                      <p className="text-red-400 text-xs mt-1">{String(signupErrors.email.message)}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-1.5">
+                      Password
+                    </label>
+                    <input
+                      type="password"
+                      {...registerField('password')}
+                      placeholder="Create a password (min 6 characters)"
+                      className={`w-full px-4 py-3.5 rounded-lg text-sm bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1a7d4e] border-0 ${
+                        signupErrors.password ? 'ring-2 ring-red-500' : ''
+                      }`}
+                    />
+                    {signupErrors.password && (
+                      <p className="text-red-400 text-xs mt-1">{String(signupErrors.password.message)}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-1.5">
+                      City <span className="text-gray-500">(optional)</span>
+                    </label>
+                    <input
+                      type="text"
+                      {...registerField('city')}
+                      placeholder="e.g. Mumbai, Delhi, Bangalore"
+                      className="w-full px-4 py-3.5 rounded-lg text-sm bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1a7d4e] border-0"
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full py-3.5 text-white font-semibold rounded-lg transition-opacity disabled:opacity-60 text-sm mt-2"
+                    style={{ backgroundColor: '#1a7d4e' }}
+                  >
+                    {loading ? 'Creating account...' : 'Create Account'}
+                  </button>
+                </form>
+              )}
 
               {/* Divider */}
               <div className="flex items-center gap-3 my-5">
@@ -251,12 +388,21 @@ export const EmployerLoginPage = () => {
                 <span className="text-[#1a7d4e] cursor-pointer hover:underline">Privacy policy</span>
               </p>
 
-              {/* Register link */}
+              {/* Mode switch hint */}
               <p className="text-center text-xs text-gray-500 mt-4">
-                New to apna?{' '}
-                <Link to="/register" className="text-[#1a7d4e] font-medium hover:underline">
-                  Register as employer
-                </Link>
+                {mode === 'login' ? (
+                  <>New to apna?{' '}
+                    <button type="button" onClick={() => setMode('signup')} className="text-[#1a7d4e] font-medium hover:underline">
+                      Create an employer account
+                    </button>
+                  </>
+                ) : (
+                  <>Already have an account?{' '}
+                    <button type="button" onClick={() => setMode('login')} className="text-[#1a7d4e] font-medium hover:underline">
+                      Sign in
+                    </button>
+                  </>
+                )}
               </p>
             </div>
           </div>
