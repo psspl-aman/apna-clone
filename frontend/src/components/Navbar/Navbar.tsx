@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAppSelector, useAppDispatch } from '../../app/hooks';
 import { logoutUser } from '../../features/auth/authSlice';
@@ -177,6 +177,7 @@ export const Navbar = () => {
           <Link to="/resume-tool" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded" onClick={() => setMobileMenuOpen(false)}>Resume Tool</Link>
           {isAuthenticated ? (
             <>
+              <Link to="/jobs" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded" onClick={() => setMobileMenuOpen(false)}>Jobs</Link>
               {user?.role === 'candidate' && (
                 <Link to="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded" onClick={() => setMobileMenuOpen(false)}>Profile</Link>
               )}
