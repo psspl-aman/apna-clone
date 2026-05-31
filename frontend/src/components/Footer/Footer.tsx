@@ -1,30 +1,94 @@
-import { Link } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useAppDispatch } from '../../app/hooks';
+import { setFilter } from '../../features/jobs/jobsSlice';
 
-const FIND_JOBS_CITIES = [
-  'Agra', 'Ahmedabad', 'Ahmednagar', 'Ajmer', 'Aligarh', 'Amritsar',
-  'Asansol', 'Aurangabad', 'Bareilly', 'Belagavi', 'Bengaluru Bangalore', 'Bhavnagar',
+const FIND_JOBS_CITIES: { label: string; slug: string }[] = [
+  { label: 'Agra', slug: 'agra' },
+  { label: 'Ahmedabad', slug: 'ahmedabad' },
+  { label: 'Amritsar', slug: 'amritsar' },
+  { label: 'Aurangabad', slug: 'aurangabad' },
+  { label: 'Bareilly', slug: 'bareilly' },
+  { label: 'Bengaluru', slug: 'bengaluru' },
+  { label: 'Bhopal', slug: 'bhopal' },
+  { label: 'Bhubaneswar', slug: 'bhubaneswar' },
+  { label: 'Chandigarh', slug: 'chandigarh' },
+  { label: 'Chennai', slug: 'chennai' },
+  { label: 'Coimbatore', slug: 'coimbatore' },
+  { label: 'Delhi-NCR', slug: 'delhi-ncr' },
 ];
 
-const START_HIRING_CITIES = [
-  'Agra', 'Ahmedabad', 'Ahmednagar', 'Ajmer', 'Aligarh', 'Amritsar',
-  'Asansol', 'Aurangabad', 'Bareilly', 'Belagavi', 'Bengaluru Bangalore', 'Bhavnagar',
+const START_HIRING_CITIES: { label: string; slug: string }[] = [
+  { label: 'Agra', slug: 'agra' },
+  { label: 'Ahmedabad', slug: 'ahmedabad' },
+  { label: 'Bengaluru', slug: 'bengaluru' },
+  { label: 'Chennai', slug: 'chennai' },
+  { label: 'Delhi-NCR', slug: 'delhi-ncr' },
+  { label: 'Hyderabad', slug: 'hyderabad' },
+  { label: 'Kolkata', slug: 'kolkata' },
+  { label: 'Mumbai', slug: 'mumbai' },
+  { label: 'Pune', slug: 'pune' },
+  { label: 'Jaipur', slug: 'jaipur' },
+  { label: 'Lucknow', slug: 'lucknow' },
+  { label: 'Noida', slug: 'noida' },
 ];
 
-const POPULAR_JOBS = [
-  'Delivery Person Jobs', 'Accounts / Finance Jobs', 'Sales (Field Work)',
-  'Human Resource', 'Backoffice Jobs', 'Business Development',
-  'Telecaller / BPO', 'Work from Home Jobs', 'Night Shift Jobs',
-  'Part Time Jobs', 'Full Time Jobs', 'Freshers Jobs',
+const POPULAR_JOBS: { label: string; filter: Record<string, string | number> }[] = [
+  { label: 'Delivery Person Jobs',  filter: { category: 'delivery_person' } },
+  { label: 'Accounts / Finance Jobs', filter: { category: 'accounts_finance' } },
+  { label: 'Sales (Field Work)',    filter: { category: 'field_sales' } },
+  { label: 'Human Resource',        filter: { category: 'human_resource' } },
+  { label: 'Backoffice Jobs',       filter: { category: 'admin_office_assistant' } },
+  { label: 'Business Development',  filter: { category: 'business_development' } },
+  { label: 'Telecaller / BPO',      filter: { category: 'telecalling_bpo_telesales' } },
+  { label: 'Work from Home Jobs',   filter: { job_type: 'work_from_home' } },
+  { label: 'Night Shift Jobs',      filter: { job_type: 'night_shift' } },
+  { label: 'Part Time Jobs',        filter: { job_type: 'part_time' } },
+  { label: 'Full Time Jobs',        filter: { job_type: 'full_time' } },
+  { label: 'Freshers Jobs',         filter: { exp_min: 0, exp_max: 0 } },
 ];
 
-const DEPARTMENTS = [
-  'Admin / Back Office / Computer Operator', 'Advertising / Communication', 'Aviation & Aerospace',
-  'Banking / Insurance / Financial Services', 'Beauty, Fitness & Personal Care', 'Construction & Site Engineering',
-  'Consulting', 'Content, Editorial & Journalism', 'CSR & Social Service',
-  'Customer Support', 'Data Science & Analytics', 'Delivery / Driver / Logistics',
+const DEPARTMENTS: { label: string; slug: string }[] = [
+  { label: 'Admin / Back Office / Computer Operator', slug: 'admin_office_assistant' },
+  { label: 'Advertising / Communication',             slug: 'content_writing' },
+  { label: 'Aviation & Aerospace',                    slug: 'hospitality_hotel_event_management' },
+  { label: 'Banking / Insurance / Financial Services', slug: 'accounts_finance' },
+  { label: 'Beauty, Fitness & Personal Care',         slug: 'beautician_hair_stylist' },
+  { label: 'Construction & Site Engineering',         slug: 'civil_engineer_architect' },
+  { label: 'Consulting',                              slug: 'business_development' },
+  { label: 'Content, Editorial & Journalism',         slug: 'content_writing' },
+  { label: 'CSR & Social Service',                    slug: 'business_development' },
+  { label: 'Customer Support',                        slug: 'telecalling_bpo_telesales' },
+  { label: 'Data Science & Analytics',                slug: 'software_web_developer' },
+  { label: 'Delivery / Driver / Logistics',           slug: 'delivery_person' },
 ];
 
 export const Footer = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const dispatch = useAppDispatch();
+
+  // Hide the entire footer on the browse page (it IS the browse page)
+  if (location.pathname === '/jobs/browse') return null;
+
+  const goCity = (slug: string) => {
+    dispatch(setFilter({ city: slug }));
+    navigate(`/jobs?city=${encodeURIComponent(slug)}`);
+  };
+
+  const goDept = (slug: string) => {
+    dispatch(setFilter({ category: slug }));
+    navigate(`/jobs?category=${encodeURIComponent(slug)}`);
+  };
+
+  const goJob = (filter: Record<string, string | number>) => {
+    dispatch(setFilter(filter as any));
+    const params = new URLSearchParams();
+    Object.entries(filter).forEach(([k, v]) => {
+      if (v !== '' && v !== undefined) params.set(k, String(v));
+    });
+    navigate(`/jobs?${params.toString()}`);
+  };
+
   return (
     <footer className="mt-auto">
       {/* Main footer - light background */}
@@ -36,13 +100,21 @@ export const Footer = () => {
             <h3 className="text-sm font-bold text-gray-800 mb-3">Find Jobs</h3>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-x-4 gap-y-1.5">
               {FIND_JOBS_CITIES.map((city) => (
-                <Link key={city} to={`/jobs?city=${encodeURIComponent(city)}`}
-                  className="text-xs text-gray-600 hover:text-primary">
-                  Jobs in {city}
-                </Link>
+                <button
+                  key={city.slug}
+                  onClick={() => goCity(city.slug)}
+                  className="text-left text-xs text-gray-600 hover:text-primary"
+                >
+                  Jobs in {city.label}
+                </button>
               ))}
             </div>
-            <button className="text-xs text-primary mt-2 hover:underline">View more ⌄</button>
+            <button
+              onClick={() => navigate('/jobs/browse?section=city')}
+              className="text-xs text-primary mt-2 hover:underline"
+            >
+              View more ⌄
+            </button>
           </div>
 
           {/* Start Hiring */}
@@ -50,13 +122,21 @@ export const Footer = () => {
             <h3 className="text-sm font-bold text-gray-800 mb-3">Start Hiring</h3>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-x-4 gap-y-1.5">
               {START_HIRING_CITIES.map((city) => (
-                <Link key={city} to="/employer/login"
-                  className="text-xs text-gray-600 hover:text-primary">
-                  Hire in {city}
-                </Link>
+                <button
+                  key={city.slug}
+                  onClick={() => navigate('/employer/login')}
+                  className="text-left text-xs text-gray-600 hover:text-primary"
+                >
+                  Hire in {city.label}
+                </button>
               ))}
             </div>
-            <button className="text-xs text-primary mt-2 hover:underline">View more ⌄</button>
+            <button
+              onClick={() => navigate('/employer/login')}
+              className="text-xs text-primary mt-2 hover:underline"
+            >
+              View more ⌄
+            </button>
           </div>
 
           {/* Popular Jobs */}
@@ -64,13 +144,21 @@ export const Footer = () => {
             <h3 className="text-sm font-bold text-gray-800 mb-3">Popular Jobs</h3>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-x-4 gap-y-1.5">
               {POPULAR_JOBS.map((job) => (
-                <Link key={job} to="/jobs"
-                  className="text-xs text-gray-600 hover:text-primary">
-                  {job}
-                </Link>
+                <button
+                  key={job.label}
+                  onClick={() => goJob(job.filter)}
+                  className="text-left text-xs text-gray-600 hover:text-primary"
+                >
+                  {job.label}
+                </button>
               ))}
             </div>
-            <button className="text-xs text-primary mt-2 hover:underline">View more ⌄</button>
+            <button
+              onClick={() => navigate('/jobs/browse?section=department')}
+              className="text-xs text-primary mt-2 hover:underline"
+            >
+              View more ⌄
+            </button>
           </div>
 
           {/* Jobs by Department */}
@@ -78,13 +166,21 @@ export const Footer = () => {
             <h3 className="text-sm font-bold text-gray-800 mb-3">Jobs by Department</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-1.5">
               {DEPARTMENTS.map((dept) => (
-                <Link key={dept} to={`/jobs?category=${encodeURIComponent(dept)}`}
-                  className="text-xs text-gray-600 hover:text-primary">
-                  {dept}
-                </Link>
+                <button
+                  key={dept.slug + dept.label}
+                  onClick={() => goDept(dept.slug)}
+                  className="text-left text-xs text-gray-600 hover:text-primary"
+                >
+                  {dept.label}
+                </button>
               ))}
             </div>
-            <button className="text-xs text-primary mt-2 hover:underline">View more ⌄</button>
+            <button
+              onClick={() => navigate('/jobs/browse?section=department')}
+              className="text-xs text-primary mt-2 hover:underline"
+            >
+              View more ⌄
+            </button>
           </div>
 
           {/* Bottom links */}
