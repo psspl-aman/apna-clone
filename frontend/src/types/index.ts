@@ -96,6 +96,7 @@ export interface Job {
   education?: string;
   openings: number;
   isActive: boolean;
+  isPaid?: boolean;
   // Advanced fields from PostJobWizard
   workLocationType?: string;     // work_from_office | work_from_home | field_job
   payType?: string;              // fixed_only | fixed_incentive | incentive_only
@@ -107,7 +108,9 @@ export interface Job {
   isWalkin?: boolean;
   contactPreference?: string;
   planType?: string;
+  razorpayPaymentId?: string | null;
   createdAt: string;
+  updatedAt?: string;
   applicantCount?: number;
 }
 

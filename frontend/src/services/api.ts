@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { store } from '../app/store';
 import { logout } from '../features/auth/authSlice';
+import { toCamelCase } from '../utils/caseTransform';
 
 const api = axios.create({
   baseURL: process.env.REACT_APP_API_URL,
@@ -14,7 +15,11 @@ api.interceptors.request.use((config) => {
 });
 
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // Convert all snake_case keys from the backend to camelCase
+    if (response.data) response.data = toCamelCase(response.data);
+    return response;
+  },
   async (error) => {
     const original = error.config;
     if (error.response?.status === 401 && !original._retry) {
