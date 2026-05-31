@@ -299,7 +299,7 @@ export const JobsDropdown = ({ isOpen, onClose }: JobsDropdownProps) => {
   return (
     <div
       ref={dropdownRef}
-      className="absolute top-full left-0 mt-2 z-50 flex gap-2"
+      className="absolute top-full left-0 pt-2 z-50 flex gap-2"
     >
       {mainPanel}
       {subPanel}
