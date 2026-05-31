@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAppSelector } from '../app/hooks';
 import api from '../services/api';
 import toast from 'react-hot-toast';
@@ -120,8 +120,43 @@ const StepBar = ({ current }: { current: number }) => (
    MAIN COMPONENT
 ══════════════════════════════════════════════════════════════ */
 export const PostJobWizard = () => {
-  const [step, setStep] = useState(0);
-  const [data, setData] = useState<JobData>(INITIAL);
+  const location = useLocation();
+  const locationState = (location.state as any) || {};
+
+  const [step, setStep] = useState<number>(locationState.initialStep ?? 0);
+  const [data, setData] = useState<JobData>(() => {
+    if (locationState.prefill) {
+      const p = locationState.prefill;
+      return {
+        title: p.title || '',
+        job_type: Array.isArray(p.job_type) ? p.job_type : [p.job_type || 'full_time'],
+        is_night_shift: p.is_night_shift || false,
+        work_location_type: p.work_location_type || 'work_from_office',
+        city: p.city || '',
+        salary_min: p.salary_min || 0,
+        salary_max: p.salary_max || 0,
+        pay_type: p.pay_type || 'fixed_only',
+        perks: p.perks || [],
+        has_joining_fee: p.has_joining_fee || false,
+        education: p.education || '10th',
+        english_level: p.english_level || 'no_english',
+        experience_type: p.experience_type || 'any',
+        gender: p.gender || 'any',
+        skills: p.skills || [],
+        description: p.description || '',
+        category: p.category || '',
+        openings: p.openings || 1,
+        experience_min: p.experience_min || 0,
+        experience_max: p.experience_max || 5,
+        is_walkin: p.is_walkin ?? null,
+        contact_preference: p.contact_preference || 'to_myself',
+        plan_type: p.plan_type || 'classic',
+      };
+    }
+    return INITIAL;
+  });
+  const [jobId, setJobId] = useState<string | null>(locationState.jobId || null);
+  const [savingDraft, setSavingDraft] = useState(false);
   const [company, setCompany] = useState<any>(null);
   const [cities, setCities] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
@@ -129,6 +164,9 @@ export const PostJobWizard = () => {
   const [publishing, setPublishing] = useState(false);
   const { user } = useAppSelector((s) => s.auth);
   const navigate = useNavigate();
+
+  // isPaid: when navigating from dashboard for an already-paid job edit
+  const isPaidEdit = locationState.isPaid === true;
 
   useEffect(() => {
     Promise.all([
@@ -143,6 +181,59 @@ export const PostJobWizard = () => {
   }, []);
 
   const set = (field: keyof JobData, value: any) => setData((d) => ({ ...d, [field]: value }));
+
+  /** Build the job payload from current wizard data */
+  const buildJobPayload = () => ({
+    title: data.title,
+    job_type: data.job_type.length === 2 ? 'full_time' : data.job_type[0],
+    is_night_shift: data.is_night_shift,
+    work_location_type: data.work_location_type,
+    city: data.city,
+    salary_min: data.salary_min,
+    salary_max: data.salary_max,
+    pay_type: data.pay_type,
+    perks: data.perks,
+    has_joining_fee: data.has_joining_fee,
+    education: data.education,
+    english_level: data.english_level,
+    experience_type: data.experience_type,
+    gender: data.gender,
+    skills: data.skills,
+    description: data.description,
+    category: data.category,
+    openings: data.openings,
+    experience_min: data.experience_min,
+    experience_max: data.experience_max,
+    is_walkin: data.is_walkin,
+    contact_preference: data.contact_preference,
+    plan_type: data.plan_type,
+  });
+
+  /**
+   * Save or update the draft job (without payment).
+   * Called when advancing from step 2 → step 3 (preview).
+   */
+  const saveDraft = async (): Promise<string | null> => {
+    setSavingDraft(true);
+    try {
+      const payload = { ...buildJobPayload(), is_paid: false, is_active: false };
+      if (jobId) {
+        // Update existing draft
+        await api.put(`/jobs/${jobId}`, payload);
+        return jobId;
+      } else {
+        const res = await api.post('/jobs', payload);
+        const newId = res.data.data?.id;
+        setJobId(newId);
+        return newId;
+      }
+    } catch {
+      toast.error('Failed to save draft. Please try again.');
+      return null;
+    } finally {
+      setSavingDraft(false);
+    }
+  };
 
   const toggleJobType = (type: string) => {
     setData((d) => {
@@ -179,42 +270,38 @@ export const PostJobWizard = () => {
     });
   };
 
+  /** Save changes to an already-paid job (no payment required) */
+  const handleSavePaidEdit = async () => {
+    if (!jobId) return;
+    setPublishing(true);
+    try {
+      await api.put(`/jobs/${jobId}`, buildJobPayload());
+      toast.success('Job updated successfully!');
+      navigate('/employer/dashboard');
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Failed to update job');
+    } finally {
+      setPublishing(false);
+    }
+  };
+
   const handlePublish = async () => {
     setPublishing(true);
     try {
-      // 1. Create Razorpay order
-      const orderRes = await api.post('/payments/create-order', { plan: data.plan_type });
-      const order = orderRes.data.data;
+      const currentJobId = jobId;
+      const jobPayload = buildJobPayload();
 
-      const jobPayload = {
-        title: data.title,
-        job_type: data.job_type.length === 2 ? 'full_time' : data.job_type[0],
-        is_night_shift: data.is_night_shift,
-        work_location_type: data.work_location_type,
-        city: data.city,
-        salary_min: data.salary_min,
-        salary_max: data.salary_max,
-        pay_type: data.pay_type,
-        perks: data.perks,
-        has_joining_fee: data.has_joining_fee,
-        education: data.education,
-        english_level: data.english_level,
-        experience_type: data.experience_type,
-        gender: data.gender,
-        skills: data.skills,
-        description: data.description,
-        category: data.category,
-        openings: data.openings,
-        experience_min: data.experience_min,
-        experience_max: data.experience_max,
-        is_walkin: data.is_walkin,
-        contact_preference: data.contact_preference,
-        plan_type: data.plan_type,
-      };
+      // 1. Create Razorpay order (pass jobId so backend can link the payment record)
+      const orderRes = await api.post('/payments/create-order', {
+        plan: data.plan_type,
+        jobId: currentJobId,
+      });
+      const order = orderRes.data.data;
 
       // 2. Mock mode (no real Razorpay keys) → publish directly
       if (order.mock) {
         await api.post('/payments/publish-job', {
+          jobId: currentJobId,
           jobData: jobPayload,
           payment: {
             razorpay_order_id: order.id,
@@ -245,6 +332,7 @@ export const PostJobWizard = () => {
         handler: async (response: any) => {
           try {
             await api.post('/payments/publish-job', {
+              jobId: currentJobId,
               jobData: jobPayload,
               payment: {
                 razorpay_order_id: response.razorpay_order_id,
@@ -814,14 +902,30 @@ export const PostJobWizard = () => {
         )}
         {step < 4 ? (
           <button
-            onClick={() => {
+            disabled={savingDraft}
+            onClick={async () => {
               if (step === 0 && !data.title.trim()) { toast.error('Job title is required'); return; }
+              // On step 2 → 3 (Interviewer Info → Preview): save draft first
+              if (step === 2) {
+                const id = await saveDraft();
+                if (!id) return; // draft save failed, stay on step
+              }
               setStep(step + 1);
             }}
-            className="px-10 py-3 text-white font-semibold rounded-lg text-sm"
+            className="px-10 py-3 text-white font-semibold rounded-lg text-sm disabled:opacity-60"
             style={{ backgroundColor: '#1a7d4e' }}
           >
-            Continue
+            {savingDraft ? 'Saving…' : 'Continue'}
+          </button>
+        ) : isPaidEdit ? (
+          // Editing an already-paid job — just save, no payment
+          <button
+            onClick={handleSavePaidEdit}
+            disabled={publishing}
+            className="px-10 py-3 text-white font-semibold rounded-lg text-sm disabled:opacity-60"
+            style={{ backgroundColor: '#1a7d4e' }}
+          >
+            {publishing ? 'Saving…' : 'Save Changes'}
           </button>
         ) : (
           <button

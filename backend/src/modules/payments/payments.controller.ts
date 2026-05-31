@@ -23,24 +23,37 @@ export class PaymentsController {
   @Post('create-order')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('employer')
-  async createOrder(@Body('plan') plan: string) {
-    const order = await this.paymentsService.createOrder(plan);
+  async createOrder(
+    @Body() body: { plan: string; jobId?: string },
+    @CurrentUser() user: any,
+  ) {
+    const order = await this.paymentsService.createOrder(body.plan, user.companyId, body.jobId);
     return { success: true, message: 'Order created', data: order };
   }
 
-  /** Verify payment and publish the job */
+  /** Verify payment and publish the job (updates existing draft by jobId, or creates new) */
   @Post('publish-job')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('employer')
   async publishJob(
-    @Body() body: { jobData: any; payment: any },
+    @Body() body: { jobId?: string; jobData?: any; payment: any },
     @CurrentUser() user: any,
   ) {
     const job = await this.paymentsService.verifyAndPublishJob(
+      body.jobId,
       body.jobData,
       user.companyId,
       body.payment,
     );
     return { success: true, message: 'Job published successfully', data: job };
+  }
+
+  /** Get employer payment history for Billing tab */
+  @Get('history')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('employer')
+  async getHistory(@CurrentUser() user: any) {
+    const history = await this.paymentsService.getHistory(user.companyId);
+    return { success: true, message: 'Payment history fetched', data: history };
   }
 }

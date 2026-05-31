@@ -12,13 +12,13 @@ import {
   Calendar, User, CheckCircle, AlertCircle,
 } from 'lucide-react';
 
-type View = 'jobs' | 'post-job' | 'company' | 'reports' | 'billing';
+type View = 'jobs' | 'post-job' | 'company' | 'reports' | 'credits' | 'billing';
 
 const NAV_ITEMS = [
   { id: 'jobs', label: 'Jobs', icon: Briefcase },
   { id: 'reports', label: 'Reports', icon: BarChart2 },
-  { id: 'billing', label: 'Credits & usage', icon: CreditCard },
-  { id: 'billing2', label: 'Billing', icon: FileText },
+  { id: 'credits', label: 'Credits & usage', icon: CreditCard },
+  { id: 'billing', label: 'Billing', icon: FileText },
   { id: 'refer', label: 'Refer & Earn', icon: Gift },
   { id: 'help', label: 'Help & Support', icon: HelpCircle },
   { id: 'sales', label: 'Contact Sales', icon: Phone, badge: 'Offers' },
@@ -26,8 +26,8 @@ const NAV_ITEMS = [
 
 export const EmployerDashboard = ({ defaultView = 'jobs' }: { defaultView?: View }) => {
   const [activeView, setActiveView] = useState<View>(defaultView);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false); // desktop collapse
-  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false); // mobile overlay
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [avatarOpen, setAvatarOpen] = useState(false);
   const [company, setCompany] = useState<any>(null);
   const [jobs, setJobs] = useState<any[]>([]);
@@ -38,6 +38,9 @@ export const EmployerDashboard = ({ defaultView = 'jobs' }: { defaultView?: View
   const [cities, setCities] = useState<any[]>([]);
   const [postingJob, setPostingJob] = useState(false);
   const [savingCompany, setSavingCompany] = useState(false);
+  const [billingHistory, setBillingHistory] = useState<any[]>([]);
+  const [billingLoading, setBillingLoading] = useState(false);
+  const [billingFilter, setBillingFilter] = useState<'all' | 'success' | 'pending' | 'failed'>('all');
   const menuRef = useRef<HTMLDivElement>(null);
   const avatarRef = useRef<HTMLDivElement>(null);
 
@@ -50,6 +53,10 @@ export const EmployerDashboard = ({ defaultView = 'jobs' }: { defaultView?: View
     loadDashboard();
     loadLookups();
   }, []);
+
+  useEffect(() => {
+    if (activeView === 'billing') loadBillingHistory();
+  }, [activeView]);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -95,6 +102,18 @@ export const EmployerDashboard = ({ defaultView = 'jobs' }: { defaultView?: View
     }
   };
 
+  const loadBillingHistory = async () => {
+    try {
+      setBillingLoading(true);
+      const res = await api.get('/payments/history');
+      setBillingHistory(res.data.data || []);
+    } catch {
+      /* non-critical */
+    } finally {
+      setBillingLoading(false);
+    }
+  };
+
   const loadLookups = async () => {
     try {
       const [catRes, cityRes] = await Promise.all([
@@ -129,6 +148,41 @@ export const EmployerDashboard = ({ defaultView = 'jobs' }: { defaultView?: View
       toast.error('Failed to update job');
     }
     setOpenMenu(null);
+  };
+
+  const handleDuplicateJob = (job: any) => {
+    // Open wizard pre-filled with job data but no jobId (creates a new draft)
+    navigate('/employer/post-job', {
+      state: {
+        prefill: job,
+        initialStep: 0,
+      },
+    });
+    setOpenMenu(null);
+  };
+
+  const handleEditJob = (job: any) => {
+    navigate('/employer/post-job', {
+      state: {
+        jobId: job.id,
+        prefill: job,
+        isPaid: job.is_paid,
+        // Paid jobs start at preview (step 3), unpaid at step 0
+        initialStep: job.is_paid ? 3 : 0,
+      },
+    });
+    setOpenMenu(null);
+  };
+
+  const handleFinishPosting = (job: any) => {
+    navigate('/employer/post-job', {
+      state: {
+        jobId: job.id,
+        prefill: job,
+        isPaid: false,
+        initialStep: 3, // Jump to preview step
+      },
+    });
   };
 
   const handlePostJob = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -240,7 +294,7 @@ export const EmployerDashboard = ({ defaultView = 'jobs' }: { defaultView?: View
           {NAV_ITEMS.map((item) => {
             const Icon = item.icon;
             const isActive = activeView === item.id;
-            const clickable = ['jobs', 'reports', 'billing', 'billing2'].includes(item.id);
+            const clickable = ['jobs', 'reports', 'credits', 'billing'].includes(item.id);
             return (
               <button
                 key={item.id}
@@ -426,7 +480,10 @@ export const EmployerDashboard = ({ defaultView = 'jobs' }: { defaultView?: View
                 </div>
               ) : (
                 <div className="space-y-3" ref={menuRef}>
-                  {jobs.map((job) => (
+                  {jobs.map((job) => {
+                    const isPaid: boolean = job.is_paid;
+                    const appliedCount = applicationCounts[job.id] ?? 0;
+                    return (
                     <div key={job.id} className="bg-white rounded-xl border border-gray-200 overflow-hidden">
                       <div className="p-5 flex flex-col md:flex-row md:items-center gap-4">
 
@@ -434,15 +491,15 @@ export const EmployerDashboard = ({ defaultView = 'jobs' }: { defaultView?: View
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 flex-wrap mb-1">
                             <h3 className="font-bold text-gray-900 text-base">{job.title}</h3>
-                            <span
-                              className={`text-xs font-semibold px-2 py-0.5 rounded ${
-                                job.is_active
-                                  ? 'bg-green-100 text-green-700'
-                                  : 'bg-orange-100 text-orange-600'
-                              }`}
-                            >
-                              {job.is_active ? 'Active' : 'Inactive'}
-                            </span>
+                            {!isPaid ? (
+                              <span className="text-xs font-semibold px-2 py-0.5 rounded bg-orange-100 text-orange-600">
+                                Select Plan
+                              </span>
+                            ) : job.is_active ? (
+                              <span className="text-xs font-semibold px-2 py-0.5 rounded bg-green-100 text-green-700">Active</span>
+                            ) : (
+                              <span className="text-xs font-semibold px-2 py-0.5 rounded bg-gray-100 text-gray-500">Inactive</span>
+                            )}
                           </div>
                           <div className="flex flex-wrap items-center gap-3 text-sm text-gray-500">
                             {job.city && (
@@ -464,33 +521,33 @@ export const EmployerDashboard = ({ defaultView = 'jobs' }: { defaultView?: View
                         <div className="flex items-center gap-6 text-sm flex-shrink-0">
                           <div className="text-center">
                             <p className="font-bold text-gray-900 text-lg">
-                              {applicationCounts[job.id] ?? 0}
+                              {isPaid ? appliedCount : '-'}
                             </p>
                             <p className="text-gray-400 text-xs">Applied to job</p>
                           </div>
                           <div className="text-center">
-                            <p className="font-bold text-gray-900 text-lg">{job.openings || 1}</p>
-                            <p className="text-gray-400 text-xs">Openings</p>
+                            <p className="font-bold text-gray-900 text-lg">{isPaid ? (job.openings || 1) : 0}</p>
+                            <p className="text-gray-400 text-xs">Database Matches</p>
                           </div>
                         </div>
 
                         {/* Actions */}
                         <div className="flex items-center gap-2 flex-shrink-0">
-                          {(applicationCounts[job.id] ?? 0) > 0 ? (
+                          {!isPaid ? (
+                            <button
+                              onClick={() => handleFinishPosting(job)}
+                              className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50"
+                            >
+                              Finish posting
+                            </button>
+                          ) : appliedCount > 0 ? (
                             <Link
                               to={`/jobs/${job.id}`}
                               className="flex items-center gap-1.5 px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50"
                             >
                               <Eye className="h-4 w-4" /> View Applicants
                             </Link>
-                          ) : (
-                            <button
-                              onClick={() => setActiveView('post-job')}
-                              className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50"
-                            >
-                              Finish posting
-                            </button>
-                          )}
+                          ) : null}
 
                           {/* Three-dot menu */}
                           <div className="relative">
@@ -503,12 +560,32 @@ export const EmployerDashboard = ({ defaultView = 'jobs' }: { defaultView?: View
                             {openMenu === job.id && (
                               <div className="absolute right-0 mt-1 w-44 bg-white rounded-lg shadow-lg border z-10 py-1">
                                 <button
-                                  onClick={() => handleToggleActive(job)}
+                                  onClick={() => handleEditJob(job)}
                                   className="flex items-center gap-2 w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                                 >
-                                  <CheckCircle className="h-4 w-4" />
-                                  {job.is_active ? 'Deactivate' : 'Activate'}
+                                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                  </svg>
+                                  Edit job
                                 </button>
+                                <button
+                                  onClick={() => handleDuplicateJob(job)}
+                                  className="flex items-center gap-2 w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                                >
+                                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                  </svg>
+                                  Duplicate
+                                </button>
+                                {isPaid && (
+                                  <button
+                                    onClick={() => handleToggleActive(job)}
+                                    className="flex items-center gap-2 w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                                  >
+                                    <CheckCircle className="h-4 w-4" />
+                                    {job.is_active ? 'Deactivate' : 'Activate'}
+                                  </button>
+                                )}
                                 <button
                                   onClick={() => handleDeleteJob(job.id)}
                                   className="flex items-center gap-2 w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50"
@@ -521,15 +598,16 @@ export const EmployerDashboard = ({ defaultView = 'jobs' }: { defaultView?: View
                         </div>
                       </div>
 
-                      {/* Info bar */}
-                      {(applicationCounts[job.id] ?? 0) === 0 && (
+                      {/* Info bar — only for unpaid drafts */}
+                      {!isPaid && (
                         <div className="border-t bg-blue-50 px-5 py-2.5 flex items-center gap-2 text-sm text-blue-700">
                           <AlertCircle className="h-4 w-4 flex-shrink-0" />
                           Finish job posting to start receiving candidates
                         </div>
                       )}
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -765,16 +843,172 @@ export const EmployerDashboard = ({ defaultView = 'jobs' }: { defaultView?: View
             </div>
           )}
 
-          {/* ════════ PLACEHOLDER VIEWS ════════ */}
-          {(activeView === 'reports' || activeView === 'billing') && (
+          {/* ════════ REPORTS VIEW ════════ */}
+          {activeView === 'reports' && (
             <div className="max-w-lg">
-              <h1 className="text-xl font-bold text-gray-900 mb-6 capitalize">{activeView}</h1>
+              <h1 className="text-xl font-bold text-gray-900 mb-6">Reports</h1>
               <div className="bg-white rounded-xl border p-12 text-center">
                 <BarChart2 className="h-12 w-12 text-gray-300 mx-auto mb-3" />
                 <p className="text-gray-500">This section is coming soon.</p>
               </div>
             </div>
           )}
+
+          {/* ════════ BILLING VIEW ════════ */}
+          {activeView === 'billing' && (() => {
+            const filtered = billingFilter === 'all'
+              ? billingHistory
+              : billingHistory.filter((p) => p.status === billingFilter);
+            return (
+              <div>
+                <h1 className="text-xl font-bold text-gray-900 mb-6">Billing</h1>
+
+                {/* Billing profile */}
+                <div className="bg-white rounded-xl border p-5 mb-4 flex items-start justify-between gap-4">
+                  <div>
+                    <h2 className="font-semibold text-gray-900 mb-1">Billing profile</h2>
+                    <p className="text-sm text-gray-500">Add your registered ISD-GST or GST number and company details that would appear on your future invoices.</p>
+                  </div>
+                  <button className="flex-shrink-0 px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 whitespace-nowrap">
+                    Add GSTIN / ISD-GSTIN
+                  </button>
+                </div>
+
+                {/* ISD-GSTIN notice */}
+                <div className="flex items-center justify-between gap-3 bg-yellow-50 border border-yellow-200 rounded-xl px-5 py-3 mb-4 text-sm">
+                  <div className="flex items-center gap-2 text-yellow-800">
+                    <AlertCircle className="h-4 w-4 flex-shrink-0" />
+                    If you're registered with ISD-GSTIN, kindly update your GSTIN accordingly.
+                  </div>
+                  <button className="text-[#1a7d4e] font-medium hover:underline whitespace-nowrap text-sm">
+                    Add GSTIN / ISD-GSTIN
+                  </button>
+                </div>
+
+                {/* Billing history */}
+                <div className="bg-white rounded-xl border">
+                  <div className="p-5 border-b">
+                    <h2 className="font-semibold text-gray-900 mb-4">Billing History</h2>
+                    {/* Filter tabs */}
+                    <div className="flex gap-2 flex-wrap">
+                      {(['all', 'success', 'pending', 'failed'] as const).map((f) => (
+                        <button
+                          key={f}
+                          onClick={() => setBillingFilter(f)}
+                          className={`px-4 py-1.5 rounded-full border text-sm font-medium transition-colors capitalize ${
+                            billingFilter === f
+                              ? 'border-[#1a7d4e] text-[#1a7d4e] bg-[#f0fdf4]'
+                              : 'border-gray-300 text-gray-600 hover:border-gray-400'
+                          }`}
+                        >
+                          {f === 'all' ? 'All' : f.charAt(0).toUpperCase() + f.slice(1)}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {billingLoading ? (
+                    <div className="p-10 text-center">
+                      <div className="h-8 w-8 border-3 border-[#1a7d4e] border-t-transparent rounded-full animate-spin mx-auto" />
+                    </div>
+                  ) : filtered.length === 0 ? (
+                    <div className="p-12 text-center">
+                      <CreditCard className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+                      <p className="text-gray-500 text-sm">No billing records found.</p>
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="border-b bg-gray-50">
+                            {['Date', 'Plan details', 'Applies until', 'Amount', 'Status', 'Action'].map((h) => (
+                              <th key={h} className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">{h}</th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100">
+                          {filtered.map((payment: any) => {
+                            const createdAt = new Date(payment.created_at || payment.createdAt);
+                            const startAt = payment.plan_start_at ? new Date(payment.plan_start_at) : null;
+                            const expiresAt = payment.plan_expires_at ? new Date(payment.plan_expires_at) : null;
+                            const statusColors: Record<string, string> = {
+                              success: 'bg-green-100 text-green-700',
+                              pending: 'bg-orange-100 text-orange-600',
+                              failed: 'bg-red-100 text-red-600',
+                            };
+                            return (
+                              <tr key={payment.id} className="hover:bg-gray-50 transition-colors">
+                                {/* Date */}
+                                <td className="px-5 py-4 align-top">
+                                  <p className="font-medium text-gray-900">
+                                    {createdAt.toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}
+                                  </p>
+                                  <p className="text-xs text-gray-400 mt-0.5">
+                                    {createdAt.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                                  </p>
+                                </td>
+                                {/* Plan details */}
+                                <td className="px-5 py-4 align-top">
+                                  <span className="text-[#1a7d4e] font-medium hover:underline cursor-pointer">
+                                    1 Job Credit Package
+                                  </span>
+                                </td>
+                                {/* Applies until */}
+                                <td className="px-5 py-4 align-top">
+                                  <p className="text-gray-700">
+                                    Ordered on: {startAt
+                                      ? startAt.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+                                      : createdAt.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                  </p>
+                                  <p className="text-gray-400 text-xs mt-0.5">
+                                    Expired on: {expiresAt
+                                      ? expiresAt.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+                                      : 'Jan 1, 0001'}
+                                  </p>
+                                </td>
+                                {/* Amount */}
+                                <td className="px-5 py-4 align-top font-semibold text-gray-900">
+                                  ₹{(payment.total_amount || 0).toLocaleString('en-IN')}
+                                </td>
+                                {/* Status */}
+                                <td className="px-5 py-4 align-top">
+                                  <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-semibold ${
+                                    statusColors[payment.status] || 'bg-gray-100 text-gray-500'
+                                  }`}>
+                                    {payment.status.charAt(0).toUpperCase() + payment.status.slice(1)}
+                                  </span>
+                                </td>
+                                {/* Action */}
+                                <td className="px-5 py-4 align-top">
+                                  {(payment.status === 'pending' || payment.status === 'failed') && payment.job_id && (
+                                    <button
+                                      onClick={() => {
+                                        const job = jobs.find((j) => j.id === payment.job_id);
+                                        if (job) handleFinishPosting(job);
+                                      }}
+                                      className="flex items-center gap-1.5 text-[#1a7d4e] text-sm font-medium hover:underline"
+                                    >
+                                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                      </svg>
+                                      Retry payment
+                                    </button>
+                                  )}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                      <div className="px-5 py-3 text-sm text-gray-500 border-t">
+                        Showing 1–{filtered.length} of {filtered.length} results
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })()}
 
         </main>
       </div>
