@@ -13,6 +13,7 @@ import { JobFilterDto } from './dto/job-filter.dto';
 export class JobsService {
   constructor(
     @InjectModel(Job) private readonly jobModel: typeof Job,
+    @InjectModel(Company) private readonly companyModel: typeof Company,
     @InjectModel(SavedJob) private readonly savedJobModel: typeof SavedJob,
     @InjectModel(Application) private readonly applicationModel: typeof Application,
   ) {}
@@ -111,22 +112,27 @@ export class JobsService {
   }
 
   async update(id: string, dto: UpdateJobDto, userId: string) {
-    const job = await this.jobModel.findByPk(id, {
-      include: [{ model: Company }],
-    });
+    const job = await this.jobModel.findByPk(id);
     if (!job) throw new NotFoundException('Job not found');
-    if (job.company.user_id !== userId) throw new ForbiddenException('Not your job');
+
+    // Direct company lookup avoids circular include issues
+    const company = await this.companyModel.findByPk(job.company_id);
+    if (!company || company.user_id !== userId) {
+      throw new ForbiddenException('Not your job');
+    }
 
     await job.update(dto as any);
     return job;
   }
 
   async delete(id: string, userId: string) {
-    const job = await this.jobModel.findByPk(id, {
-      include: [{ model: Company }],
-    });
+    const job = await this.jobModel.findByPk(id);
     if (!job) throw new NotFoundException('Job not found');
-    if (job.company.user_id !== userId) throw new ForbiddenException('Not your job');
+
+    const company = await this.companyModel.findByPk(job.company_id);
+    if (!company || company.user_id !== userId) {
+      throw new ForbiddenException('Not your job');
+    }
 
     await job.destroy();
     return { success: true };

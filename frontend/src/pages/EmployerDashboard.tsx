@@ -484,7 +484,7 @@ export const EmployerDashboard = ({ defaultView = 'jobs' }: { defaultView?: View
                     const isPaid: boolean = job.is_paid;
                     const appliedCount = applicationCounts[job.id] ?? 0;
                     return (
-                    <div key={job.id} className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+                    <div key={job.id} className="bg-white rounded-xl border border-gray-200">
                       <div className="p-5 flex flex-col md:flex-row md:items-center gap-4">
 
                         {/* Job info */}
@@ -558,7 +558,7 @@ export const EmployerDashboard = ({ defaultView = 'jobs' }: { defaultView?: View
                               <MoreVertical className="h-5 w-5" />
                             </button>
                             {openMenu === job.id && (
-                              <div className="absolute right-0 mt-1 w-44 bg-white rounded-lg shadow-lg border z-10 py-1">
+                              <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-lg shadow-xl border z-50 py-1">
                                 <button
                                   onClick={() => handleEditJob(job)}
                                   className="flex items-center gap-2 w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
@@ -600,7 +600,7 @@ export const EmployerDashboard = ({ defaultView = 'jobs' }: { defaultView?: View
 
                       {/* Info bar — only for unpaid drafts */}
                       {!isPaid && (
-                        <div className="border-t bg-blue-50 px-5 py-2.5 flex items-center gap-2 text-sm text-blue-700">
+                        <div className="border-t bg-blue-50 px-5 py-2.5 flex items-center gap-2 text-sm text-blue-700 rounded-b-xl">
                           <AlertCircle className="h-4 w-4 flex-shrink-0" />
                           Finish job posting to start receiving candidates
                         </div>
