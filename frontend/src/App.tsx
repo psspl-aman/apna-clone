@@ -20,6 +20,8 @@ import { PostJobWizard } from './pages/PostJobWizard';
 import { NotFoundPage } from './pages/NotFound';
 import { JobPrepPage } from './pages/JobPrep';
 import { BrowseJobsPage } from './pages/BrowseJobs';
+import { CareerCompassPage } from './pages/CareerCompass';
+import { ResumeBuilderPage } from './pages/ResumeBuilder';
 import { ContestPage } from './pages/Contest';
 import { DegreePage } from './pages/Degree';
 import { ResumeToolPage } from './pages/ResumeTool';
@@ -66,6 +68,9 @@ function App() {
                 <Route path="/" element={<HomePage />} />
                 <Route path="/jobs" element={<JobsPage />} />
                 <Route path="/jobs/browse" element={<BrowseJobsPage />} />
+                <Route path="/career-compass" element={<CareerCompassPage />} />
+                <Route path="/career-compass/new" element={<ResumeBuilderPage />} />
+                <Route path="/career-compass/edit/:id" element={<ResumeBuilderPage />} />
                 <Route path="/jobs/:id" element={<JobDetailPage />} />
                 <Route path="/job-prep" element={<JobPrepPage />} />
                 <Route path="/contest" element={<ContestPage />} />

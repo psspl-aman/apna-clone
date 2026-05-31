@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAppSelector, useAppDispatch } from '../../app/hooks';
 import { logoutUser } from '../../features/auth/authSlice';
@@ -13,7 +13,17 @@ export const Navbar = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [jobsOpen, setJobsOpen] = useState(false);
+  const [careerOpen, setCareerOpen] = useState(false);
   const [authModal, setAuthModal] = useState<{ open: boolean; tab: 'login' | 'register' }>({ open: false, tab: 'login' });
+  const careerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (careerRef.current && !careerRef.current.contains(e.target as Node)) setCareerOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
 
   const openLogin = () => setAuthModal({ open: true, tab: 'login' });
   const openRegister = () => setAuthModal({ open: true, tab: 'register' });
@@ -37,7 +47,7 @@ export const Navbar = () => {
 
             <div
               className="hidden md:block relative"
-              onMouseEnter={() => { setJobsOpen(true); setDropdownOpen(false); }}
+              onMouseEnter={() => { setJobsOpen(true); setDropdownOpen(false); setCareerOpen(false); }}
               onMouseLeave={() => setJobsOpen(false)}
             >
               <Link
@@ -81,13 +91,40 @@ export const Navbar = () => {
               Degree
             </Link>
 
-            <Link
-              to="/resume-tool"
-              onClick={() => { setJobsOpen(false); setDropdownOpen(false); }}
-              className="hidden md:block text-sm font-medium text-gray-700 hover:text-[#1a7d4e] transition-colors py-2"
-            >
-              Resume Tool
-            </Link>
+            {/* Career Compass dropdown */}
+            <div className="hidden md:block relative" ref={careerRef}>
+              <button
+                onClick={() => { setCareerOpen(o => !o); setJobsOpen(false); setDropdownOpen(false); }}
+                className={`flex items-center gap-1 text-sm font-medium py-2 ${
+                  careerOpen ? 'text-[#1a7d4e]' : 'text-gray-700'
+                } hover:text-[#1a7d4e] transition-colors`}
+              >
+                Resume Tool
+                <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${
+                  careerOpen ? 'rotate-180' : ''
+                }`} />
+              </button>
+              {careerOpen && (
+                <div className="absolute top-full left-0 pt-2 z-50">
+                  <div className="bg-white rounded-xl shadow-xl border border-gray-100 py-1 min-w-[180px]">
+                    <Link
+                      to="/career-compass"
+                      onClick={() => setCareerOpen(false)}
+                      className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-[#1a7d4e]"
+                    >
+                      Resumes
+                    </Link>
+                    <Link
+                      to="/career-compass?tab=cover-letters"
+                      onClick={() => setCareerOpen(false)}
+                      className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-[#1a7d4e]"
+                    >
+                      Cover Letters
+                    </Link>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="hidden md:flex items-center gap-4">
@@ -174,7 +211,7 @@ export const Navbar = () => {
           <Link to="/job-prep" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded" onClick={() => setMobileMenuOpen(false)}>Job Prep</Link>
           <Link to="/contest" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded" onClick={() => setMobileMenuOpen(false)}>Contest</Link>
           <Link to="/degree" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded" onClick={() => setMobileMenuOpen(false)}>Degree</Link>
-          <Link to="/resume-tool" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded" onClick={() => setMobileMenuOpen(false)}>Resume Tool</Link>
+          <Link to="/career-compass" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded" onClick={() => setMobileMenuOpen(false)}>Resume Tool</Link>
           {isAuthenticated ? (
             <>
               <Link to="/jobs" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded" onClick={() => setMobileMenuOpen(false)}>Jobs</Link>

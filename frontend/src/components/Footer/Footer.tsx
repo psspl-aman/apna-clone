@@ -67,8 +67,12 @@ export const Footer = () => {
   const location = useLocation();
   const dispatch = useAppDispatch();
 
-  // Hide the entire footer on the browse page (it IS the browse page)
-  if (location.pathname === '/jobs/browse') return null;
+  // Hide footer on browse page and resume builder
+  if (
+    location.pathname === '/jobs/browse' ||
+    location.pathname === '/career-compass/new' ||
+    location.pathname.startsWith('/career-compass/edit/')
+  ) return null;
 
   const goCity = (slug: string) => {
     dispatch(setFilter({ city: slug }));
