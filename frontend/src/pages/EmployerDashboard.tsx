@@ -139,11 +139,11 @@ export const EmployerDashboard = ({ defaultView = 'jobs' }: { defaultView?: View
 
   const handleToggleActive = async (job: any) => {
     try {
-      await jobsService.updateJob(job.id, { is_active: !job.is_active } as any);
+      await jobsService.updateJob(job.id, { is_active: !job.isActive } as any);
       setJobs((prev) =>
-        prev.map((j) => (j.id === job.id ? { ...j, is_active: !j.is_active } : j)),
+        prev.map((j) => (j.id === job.id ? { ...j, isActive: !j.isActive } : j)),
       );
-      toast.success(job.is_active ? 'Job deactivated' : 'Job activated');
+      toast.success(job.isActive ? 'Job deactivated' : 'Job activated');
     } catch {
       toast.error('Failed to update job');
     }
@@ -166,9 +166,9 @@ export const EmployerDashboard = ({ defaultView = 'jobs' }: { defaultView?: View
       state: {
         jobId: job.id,
         prefill: job,
-        isPaid: job.is_paid,
+        isPaid: job.isPaid,
         // Paid jobs start at preview (step 3), unpaid at step 0
-        initialStep: job.is_paid ? 3 : 0,
+        initialStep: job.isPaid ? 3 : 0,
       },
     });
     setOpenMenu(null);
@@ -481,7 +481,7 @@ export const EmployerDashboard = ({ defaultView = 'jobs' }: { defaultView?: View
               ) : (
                 <div className="space-y-3" ref={menuRef}>
                   {jobs.map((job) => {
-                    const isPaid: boolean = job.is_paid;
+                    const isPaid: boolean = job.isPaid;
                     const appliedCount = applicationCounts[job.id] ?? 0;
                     return (
                     <div key={job.id} className="bg-white rounded-xl border border-gray-200">
@@ -495,7 +495,7 @@ export const EmployerDashboard = ({ defaultView = 'jobs' }: { defaultView?: View
                               <span className="text-xs font-semibold px-2 py-0.5 rounded bg-orange-100 text-orange-600">
                                 Select Plan
                               </span>
-                            ) : job.is_active ? (
+                            ) : job.isActive ? (
                               <span className="text-xs font-semibold px-2 py-0.5 rounded bg-green-100 text-green-700">Active</span>
                             ) : (
                               <span className="text-xs font-semibold px-2 py-0.5 rounded bg-gray-100 text-gray-500">Inactive</span>
@@ -583,7 +583,7 @@ export const EmployerDashboard = ({ defaultView = 'jobs' }: { defaultView?: View
                                     className="flex items-center gap-2 w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                                   >
                                     <CheckCircle className="h-4 w-4" />
-                                    {job.is_active ? 'Deactivate' : 'Activate'}
+                                    {job.isActive ? 'Deactivate' : 'Activate'}
                                   </button>
                                 )}
                                 <button
@@ -928,9 +928,9 @@ export const EmployerDashboard = ({ defaultView = 'jobs' }: { defaultView?: View
                         </thead>
                         <tbody className="divide-y divide-gray-100">
                           {filtered.map((payment: any) => {
-                            const createdAt = new Date(payment.created_at || payment.createdAt);
-                            const startAt = payment.plan_start_at ? new Date(payment.plan_start_at) : null;
-                            const expiresAt = payment.plan_expires_at ? new Date(payment.plan_expires_at) : null;
+                            const createdAt = new Date(payment.createdAt || payment.created_at);
+                            const startAt = payment.planStartAt ? new Date(payment.planStartAt) : null;
+                            const expiresAt = payment.planExpiresAt ? new Date(payment.planExpiresAt) : null;
                             const statusColors: Record<string, string> = {
                               success: 'bg-green-100 text-green-700',
                               pending: 'bg-orange-100 text-orange-600',
@@ -968,7 +968,7 @@ export const EmployerDashboard = ({ defaultView = 'jobs' }: { defaultView?: View
                                 </td>
                                 {/* Amount */}
                                 <td className="px-5 py-4 align-top font-semibold text-gray-900">
-                                  ₹{(payment.total_amount || 0).toLocaleString('en-IN')}
+                                  ₹{(payment.totalAmount || 0).toLocaleString('en-IN')}
                                 </td>
                                 {/* Status */}
                                 <td className="px-5 py-4 align-top">
@@ -980,10 +980,10 @@ export const EmployerDashboard = ({ defaultView = 'jobs' }: { defaultView?: View
                                 </td>
                                 {/* Action */}
                                 <td className="px-5 py-4 align-top">
-                                  {(payment.status === 'pending' || payment.status === 'failed') && payment.job_id && (
+                                  {(payment.status === 'pending' || payment.status === 'failed') && payment.jobId && (
                                     <button
                                       onClick={() => {
-                                        const job = jobs.find((j) => j.id === payment.job_id);
+                                      const job = jobs.find((j) => j.id === payment.jobId);
                                         if (job) handleFinishPosting(job);
                                       }}
                                       className="flex items-center gap-1.5 text-[#1a7d4e] text-sm font-medium hover:underline"
