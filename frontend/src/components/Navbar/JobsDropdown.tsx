@@ -149,23 +149,23 @@ const otherItems: SubmenuItem[] = [
 const submenuData: Record<string, SubmenuConfig> = {
   city: {
     items: cityItems,
-    viewAll: { label: 'View All 74 Cities', href: '/jobs?browse=city' },
+    viewAll: { label: 'View All 74 Cities', href: '/jobs/browse?section=city' },
   },
   department: {
     items: departmentItems,
-    viewAll: { label: 'View All 43 Departments', href: '/jobs?browse=department' },
+    viewAll: { label: 'View All 43 Departments', href: '/jobs/browse?section=department' },
   },
   company: {
     items: companyItems,
-    viewAll: { label: 'View All Companies', href: '/jobs?browse=company' },
+    viewAll: { label: 'View All Companies', href: '/jobs/browse?section=company' },
   },
   qualification: {
     items: qualificationItems,
-    viewAll: { label: 'View All Qualifications', href: '/jobs?browse=qualification' },
+    viewAll: { label: 'View All Qualifications', href: '/jobs/browse?section=department' },
   },
   others: {
     items: otherItems,
-    viewAll: { label: 'View All', href: '/jobs?browse=others' },
+    viewAll: { label: 'View All', href: '/jobs/browse' },
   },
 };
 

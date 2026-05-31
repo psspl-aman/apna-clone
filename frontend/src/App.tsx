@@ -19,6 +19,7 @@ import { PostJobPage } from './pages/PostJob';
 import { PostJobWizard } from './pages/PostJobWizard';
 import { NotFoundPage } from './pages/NotFound';
 import { JobPrepPage } from './pages/JobPrep';
+import { BrowseJobsPage } from './pages/BrowseJobs';
 import { ContestPage } from './pages/Contest';
 import { DegreePage } from './pages/Degree';
 import { ResumeToolPage } from './pages/ResumeTool';
@@ -64,6 +65,7 @@ function App() {
               <Routes>
                 <Route path="/" element={<HomePage />} />
                 <Route path="/jobs" element={<JobsPage />} />
+                <Route path="/jobs/browse" element={<BrowseJobsPage />} />
                 <Route path="/jobs/:id" element={<JobDetailPage />} />
                 <Route path="/job-prep" element={<JobPrepPage />} />
                 <Route path="/contest" element={<ContestPage />} />

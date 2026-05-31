@@ -371,7 +371,7 @@ export const JobsPage = () => {
                   className="w-full mb-1" style={{accentColor:G}}/>
                 <div className="flex justify-between text-[11px] text-gray-500">
                   <span className="text-[10px] font-semibold text-white px-2 py-0.5 rounded-full" style={{backgroundColor:G}}>
-                    \u20b9{(filters.salary_min||0).toLocaleString('en-IN')}
+                    {(filters.salary_min||0).toLocaleString('en-IN')}
                   </span>
                   <span>1.5 Lakhs</span>
                 </div>
