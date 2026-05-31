@@ -127,30 +127,33 @@ export const PostJobWizard = () => {
   const [data, setData] = useState<JobData>(() => {
     if (locationState.prefill) {
       const p = locationState.prefill;
+      // After toCamelCase interceptor, API data arrives in camelCase.
+      // Support both camelCase (API) and snake_case (fallback) for safety.
+      const jobType = p.jobType || p.job_type;
       return {
         title: p.title || '',
-        job_type: Array.isArray(p.job_type) ? p.job_type : [p.job_type || 'full_time'],
-        is_night_shift: p.is_night_shift || false,
-        work_location_type: p.work_location_type || 'work_from_office',
+        job_type: Array.isArray(jobType) ? jobType : [jobType || 'full_time'],
+        is_night_shift: p.isNightShift ?? p.is_night_shift ?? false,
+        work_location_type: p.workLocationType || p.work_location_type || 'work_from_office',
         city: p.city || '',
-        salary_min: p.salary_min || 0,
-        salary_max: p.salary_max || 0,
-        pay_type: p.pay_type || 'fixed_only',
+        salary_min: p.salaryMin ?? p.salary_min ?? 0,
+        salary_max: p.salaryMax ?? p.salary_max ?? 0,
+        pay_type: p.payType || p.pay_type || 'fixed_only',
         perks: p.perks || [],
-        has_joining_fee: p.has_joining_fee || false,
+        has_joining_fee: p.hasJoiningFee ?? p.has_joining_fee ?? false,
         education: p.education || '10th',
-        english_level: p.english_level || 'no_english',
-        experience_type: p.experience_type || 'any',
+        english_level: p.englishLevel || p.english_level || 'no_english',
+        experience_type: p.experienceType || p.experience_type || 'any',
         gender: p.gender || 'any',
-        skills: p.skills || [],
+        skills: Array.isArray(p.skills) ? p.skills : [],
         description: p.description || '',
         category: p.category || '',
         openings: p.openings || 1,
-        experience_min: p.experience_min || 0,
-        experience_max: p.experience_max || 5,
-        is_walkin: p.is_walkin ?? null,
-        contact_preference: p.contact_preference || 'to_myself',
-        plan_type: p.plan_type || 'classic',
+        experience_min: p.experienceMin ?? p.experience_min ?? 0,
+        experience_max: p.experienceMax ?? p.experience_max ?? 5,
+        is_walkin: p.isWalkin ?? p.is_walkin ?? null,
+        contact_preference: p.contactPreference || p.contact_preference || 'to_myself',
+        plan_type: p.planType || p.plan_type || 'classic',
       };
     }
     return INITIAL;
@@ -250,12 +253,14 @@ export const PostJobWizard = () => {
     }));
   };
 
-  const addSkill = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && skillInput.trim()) {
-      e.preventDefault();
-      setData((d) => ({ ...d, skills: Array.from(new Set([...d.skills, skillInput.trim()])) }));
-      setSkillInput('');
-    }
+  const addSkill = (e?: React.KeyboardEvent<HTMLInputElement>) => {
+    // Called on Enter keydown OR button click
+    if (e && e.key !== 'Enter') return;
+    if (e) e.preventDefault();
+    const trimmed = skillInput.trim();
+    if (!trimmed) return;
+    setData((d) => ({ ...d, skills: Array.from(new Set([...d.skills, trimmed])) }));
+    setSkillInput('');
   };
 
   /* ─── Razorpay checkout ─── */
@@ -615,16 +620,41 @@ export const PostJobWizard = () => {
 
                 <div className="mb-4">
                   <label className="block text-sm font-medium text-gray-700 mb-1.5">Skills Required</label>
-                  <input value={skillInput} onChange={(e) => setSkillInput(e.target.value)} onKeyDown={addSkill}
-                    placeholder="Type skill and press Enter..." className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1a7d4e]" />
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    {data.skills.map((s) => (
-                      <span key={s} className="flex items-center gap-1 bg-[#e8f5ef] text-[#1a7d4e] text-xs px-2.5 py-1 rounded-full">
-                        {s}
-                        <button onClick={() => setData((d) => ({ ...d, skills: d.skills.filter((x) => x !== s) }))}><X className="h-3 w-3" /></button>
-                      </span>
-                    ))}
+                  <div className="flex gap-2">
+                    <input
+                      value={skillInput}
+                      onChange={(e) => setSkillInput(e.target.value)}
+                      onKeyDown={(e) => addSkill(e)}
+                      placeholder="Type a skill and press Enter or click Add"
+                      className="flex-1 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1a7d4e]"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => addSkill()}
+                      disabled={!skillInput.trim()}
+                      className="px-4 py-2 text-sm font-medium rounded-lg border border-[#1a7d4e] text-[#1a7d4e] hover:bg-[#f0fdf4] disabled:opacity-40 transition-colors flex-shrink-0"
+                    >
+                      + Add
+                    </button>
                   </div>
+                  {data.skills.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {data.skills.map((s) => (
+                        <span key={s} className="flex items-center gap-1 bg-[#e8f5ef] text-[#1a7d4e] text-xs px-2.5 py-1 rounded-full">
+                          {s}
+                          <button
+                            type="button"
+                            onClick={() => setData((d) => ({ ...d, skills: d.skills.filter((x) => x !== s) }))}
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  {data.skills.length === 0 && (
+                    <p className="text-xs text-gray-400 mt-1">No skills added yet. Type a skill above and press Enter or click Add.</p>
+                  )}
                 </div>
               </div>
 
